@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/jvlzloons/design_portfolio/backend/database"
 	"github.com/jvlzloons/design_portfolio/backend/handlers"
+	customMiddleware "github.com/jvlzloons/design_portfolio/backend/middleware"
 )
 
 func main() {
@@ -40,6 +41,15 @@ func main() {
 	r.Get("/api/categories", handlers.GetCategories)
 	r.Get("/api/projects", handlers.GetProjects)
 	r.Get("/api/projects/{slug}", handlers.GetProjectBySlug)
+
+	// Admin routes (protected by Clerk auth)
+	r.Route("/api/admin", func(r chi.Router) {
+		r.Use(customMiddleware.RequireAuth)
+		r.Get("/projects", handlers.AdminGetProjects)
+		r.Post("/projects", handlers.CreateProject)
+		r.Put("/projects/{id}", handlers.UpdateProject)
+		r.Delete("/projects/{id}", handlers.DeleteProject)
+	})
 
 	fmt.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
