@@ -9,18 +9,20 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	"github.com/jvlzloons/design_portfolio/backend/database"
+	"github.com/jvlzloons/design_portfolio/backend/handlers"
 )
 
 func main() {
-	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("No .env file found, using system env")
 	}
 
+	database.Connect()
+
 	r := chi.NewRouter()
 
-	// Middleware
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
@@ -30,10 +32,14 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	// Health check route
 	r.Get("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
+
+	// Public routes
+	r.Get("/api/categories", handlers.GetCategories)
+	r.Get("/api/projects", handlers.GetProjects)
+	r.Get("/api/projects/{slug}", handlers.GetProjectBySlug)
 
 	fmt.Println("Server running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
