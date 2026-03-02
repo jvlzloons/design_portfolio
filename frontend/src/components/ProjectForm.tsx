@@ -49,6 +49,7 @@ export default function ProjectForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string>(initialValues.thumbnail_url ?? "");
+  const [galleryUrlInput, setGalleryUrlInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -202,13 +203,46 @@ export default function ProjectForm({
               ))}
             </div>
           )}
-          <div>
-            <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" />
-            <label htmlFor="gallery-upload" className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
-              <span>+</span>
-              <span>Add images</span>
-            </label>
-            <p className="mt-1 text-xs text-gray-500">Select multiple files at once. Images appear in order on the project page.</p>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" />
+              <label htmlFor="gallery-upload" className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
+                <span>+</span>
+                <span>Upload images</span>
+              </label>
+              <span className="text-xs text-gray-500">or paste a URL:</span>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={galleryUrlInput}
+                onChange={(e) => setGalleryUrlInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    if (galleryUrlInput.trim()) {
+                      setForm((prev) => ({ ...prev, images: [...prev.images, galleryUrlInput.trim()] }));
+                      setGalleryUrlInput("");
+                    }
+                  }
+                }}
+                placeholder="https://res.cloudinary.com/... (press Enter to add)"
+                className={inputClass}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (galleryUrlInput.trim()) {
+                    setForm((prev) => ({ ...prev, images: [...prev.images, galleryUrlInput.trim()] }));
+                    setGalleryUrlInput("");
+                  }
+                }}
+                className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors whitespace-nowrap"
+              >
+                Add URL
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">Images appear in order on the project page.</p>
           </div>
         </div>
       </div>
