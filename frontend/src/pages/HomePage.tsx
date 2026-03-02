@@ -25,7 +25,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="p-8">
-        <h1 className="text-5xl font-bold tracking-tight">Portfolio</h1>
+        <h1 className="text-5xl font-bold tracking-tight">Josh Villaluz</h1>
         <p className="mt-2 text-gray-400">Graphic Design Work</p>
       </header>
       <main className="p-8">
