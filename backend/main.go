@@ -49,6 +49,8 @@ func main() {
 		r.Post("/projects", handlers.CreateProject)
 		r.Put("/projects/{id}", handlers.UpdateProject)
 		r.Delete("/projects/{id}", handlers.DeleteProject)
+		r.Post("/categories", handlers.CreateCategory)
+		r.Delete("/categories/{id}", handlers.DeleteCategory)
 	})
 
 	fmt.Println("Server running on :8080")

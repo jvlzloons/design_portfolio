@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface ProjectFormData {
   title: string;
@@ -10,6 +10,7 @@ interface ProjectFormData {
   year: string;
   client: string;
   role: string;
+  thumbnail_url: string;
   is_featured: boolean;
   is_published: boolean;
 }
@@ -18,35 +19,67 @@ interface ProjectFormProps {
   categories: { id: string; name: string; slug: string }[];
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   onCancel: () => void;
+  initialValues?: Partial<ProjectFormData>;
+  mode?: "create" | "edit";
 }
 
-export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectFormProps) {
+export default function ProjectForm({
+  categories,
+  onSubmit,
+  onCancel,
+  initialValues = {},
+  mode = "create",
+}: ProjectFormProps) {
   const [form, setForm] = useState<ProjectFormData>({
-    title: "",
-    slug: "",
-    description: "",
-    long_description: "",
-    category: "",
-    tags: "",
-    year: "",
-    client: "",
-    role: "",
-    is_featured: false,
-    is_published: false,
+    title: initialValues.title ?? "",
+    slug: initialValues.slug ?? "",
+    description: initialValues.description ?? "",
+    long_description: initialValues.long_description ?? "",
+    category: initialValues.category ?? "",
+    tags: initialValues.tags ?? "",
+    year: initialValues.year ?? "",
+    client: initialValues.client ?? "",
+    role: initialValues.role ?? "",
+    thumbnail_url: initialValues.thumbnail_url ?? "",
+    is_featured: initialValues.is_featured ?? false,
+    is_published: initialValues.is_published ?? false,
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>(initialValues.thumbnail_url ?? "");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-generate slug from title
   function handleTitleChange(value: string) {
-    const slug = value
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
-    setForm({ ...form, title: value, slug });
+    if (mode === "create") {
+      const slug = value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      setForm({ ...form, title: value, slug });
+    } else {
+      setForm({ ...form, title: value });
+    }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      setForm((prev) => ({ ...prev, thumbnail_url: dataUrl }));
+      setThumbnailPreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleClearImage() {
+    setForm((prev) => ({ ...prev, thumbnail_url: "" }));
+    setThumbnailPreview("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     setError("");
 
@@ -65,7 +98,7 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
         category: form.category,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
         images: [],
-        thumbnail_url: null,
+        thumbnail_url: form.thumbnail_url || null,
         year: form.year ? parseInt(form.year) : null,
         client: form.client || null,
         role: form.role || null,
@@ -74,7 +107,7 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
         sort_order: 0,
       });
     } catch {
-      setError("Failed to create project. Try again.");
+      setError(mode === "edit" ? "Failed to update project. Try again." : "Failed to create project. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -82,7 +115,6 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
 
   const inputClass =
     "w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2 text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none";
-
   const labelClass = "block text-sm font-medium text-gray-300 mb-1";
 
   return (
@@ -92,6 +124,52 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
           {error}
         </div>
       )}
+
+      {/* Thumbnail Image Upload */}
+      <div>
+        <label className={labelClass}>Thumbnail Image</label>
+        <div className="space-y-3">
+          {thumbnailPreview && (
+            <div className="relative w-48 h-32 rounded-lg overflow-hidden border border-gray-700">
+              <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={handleClearImage}
+                className="absolute top-1 right-1 rounded-full bg-gray-900/80 text-gray-300 hover:text-white w-6 h-6 flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              id="thumbnail-upload"
+            />
+            <label
+              htmlFor="thumbnail-upload"
+              className="cursor-pointer rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors"
+            >
+              {thumbnailPreview ? "Change image" : "Upload image"}
+            </label>
+            <span className="text-xs text-gray-500">or paste a URL below</span>
+          </div>
+          <input
+            type="text"
+            value={form.thumbnail_url.startsWith("data:") ? "" : form.thumbnail_url}
+            onChange={(e) => {
+              setForm({ ...form, thumbnail_url: e.target.value });
+              setThumbnailPreview(e.target.value);
+            }}
+            placeholder="https://example.com/image.jpg"
+            className={inputClass}
+          />
+        </div>
+      </div>
 
       {/* Title */}
       <div>
@@ -105,7 +183,7 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
         />
       </div>
 
-      {/* Slug (auto-generated) */}
+      {/* Slug */}
       <div>
         <label className={labelClass}>Slug</label>
         <input
@@ -115,7 +193,9 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
           placeholder="project-slug"
           className={inputClass}
         />
-        <p className="mt-1 text-xs text-gray-500">Auto-generated from title. Edit if needed.</p>
+        <p className="mt-1 text-xs text-gray-500">
+          {mode === "create" ? "Auto-generated from title. Edit if needed." : "Changing the slug will break existing links."}
+        </p>
       </div>
 
       {/* Category */}
@@ -171,7 +251,7 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
         />
       </div>
 
-      {/* Year, Client, Role — side by side */}
+      {/* Year, Client, Role */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className={labelClass}>Year</label>
@@ -234,7 +314,9 @@ export default function ProjectForm({ categories, onSubmit, onCancel }: ProjectF
           disabled={submitting}
           className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
         >
-          {submitting ? "Creating..." : "Create Project"}
+          {submitting
+            ? mode === "edit" ? "Saving..." : "Creating..."
+            : mode === "edit" ? "Save Changes" : "Create Project"}
         </button>
         <button
           type="button"
