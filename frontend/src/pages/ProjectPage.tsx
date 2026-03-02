@@ -50,6 +50,7 @@ export default function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -84,7 +85,7 @@ export default function ProjectPage() {
     <div className="min-h-screen" style={pageStyle}>
       {/* Header */}
       <header style={{ borderBottom: "1px solid #d4cfc6" }} className="flex items-center px-8 py-4 relative">
-        <nav className="flex items-center gap-1 text-sm font-medium" style={{ color: "#4a4a4a" }}>
+        <nav className="hidden md:flex items-center gap-1 text-sm font-medium" style={{ color: "#4a4a4a" }}>
           <a href="/" className="px-2 py-0.5 hover:text-black transition-colors" style={{ borderBottom: "1.5px solid transparent" }}>Design</a>
           <span style={{ color: "#c4bfb6", padding: "0 2px" }}>|</span>
           <a href="/#ict" className="px-2 py-0.5 hover:text-black transition-colors" style={{ borderBottom: "1.5px solid transparent" }}>ICT</a>
@@ -98,12 +99,49 @@ export default function ProjectPage() {
           </span>
         </a>
 
-        <div className="flex items-center gap-4 ml-auto" style={{ color: "#4a4a4a" }}>
+        <div className="hidden md:flex items-center gap-4 ml-auto" style={{ color: "#4a4a4a" }}>
           <a href="https://x.com/jvlzloona" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="X / Twitter"><XIcon /></a>
           <a href="https://www.instagram.com/jvloons/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="Instagram"><InstagramIcon /></a>
           <a href="https://www.linkedin.com/in/jvlz/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="LinkedIn"><LinkedInIcon /></a>
         </div>
+
+        {/* Hamburger button - mobile only */}
+        <button
+          className="md:hidden ml-auto p-1"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Toggle menu"
+          style={{ color: "#4a4a4a" }}
+        >
+          {menuOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
       </header>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="md:hidden" style={{ borderBottom: "1px solid #d4cfc6", backgroundColor: "#f0ebe0" }}>
+          <nav className="flex flex-col px-8 py-4 gap-4 text-sm font-medium" style={{ color: "#4a4a4a" }}>
+            <a href="/" className="hover:text-black transition-colors" style={{ color: "#4a4a4a" }}>Design</a>
+            <a href="/#ict" className="hover:text-black transition-colors" style={{ color: "#4a4a4a" }}>ICT</a>
+            <a href="/#contact" className="hover:text-black transition-colors" style={{ color: "#4a4a4a" }}>Contact</a>
+          </nav>
+          <div className="flex items-center gap-4 px-8 pb-4" style={{ color: "#4a4a4a" }}>
+            <a href="https://x.com/jvlzloona" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="X / Twitter"><XIcon /></a>
+            <a href="https://www.instagram.com/jvloons/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+            <a href="https://www.linkedin.com/in/jvlz/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="LinkedIn"><LinkedInIcon /></a>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-8 py-16">

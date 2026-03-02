@@ -47,6 +47,7 @@ export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>("Design");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchAPI("/projects")
@@ -60,7 +61,7 @@ export default function HomePage() {
       {/* Header */}
       <header style={{ borderBottom: "1px solid #d4cfc6" }} className="flex items-center px-8 py-4 relative">
         {/* Left nav */}
-        <nav className="flex items-center gap-1 text-sm font-medium" style={{ color: "#4a4a4a" }}>
+        <nav className="hidden md:flex items-center gap-1 text-sm font-medium" style={{ color: "#4a4a4a" }}>
           {NAV_ITEMS.map((item, i) => (
             <span key={item} className="flex items-center gap-1">
               {i > 0 && <span style={{ color: "#c4bfb6", padding: "0 2px" }}>|</span>}
@@ -88,8 +89,8 @@ export default function HomePage() {
           </span>
         </a>
 
-        {/* Right social icons */}
-        <div className="flex items-center gap-4 ml-auto" style={{ color: "#4a4a4a" }}>
+        {/* Right social icons - desktop only */}
+        <div className="hidden md:flex items-center gap-4 ml-auto" style={{ color: "#4a4a4a" }}>
           <a href="https://x.com/jvlzloona" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="X / Twitter">
             <XIcon />
           </a>
@@ -100,7 +101,56 @@ export default function HomePage() {
             <LinkedInIcon />
           </a>
         </div>
+
+        {/* Hamburger button - mobile only */}
+        <button
+          className="md:hidden ml-auto p-1"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Toggle menu"
+          style={{ color: "#4a4a4a" }}
+        >
+          {menuOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
       </header>
+
+      {/* Mobile menu */}
+      {menuOpen && (
+        <div className="md:hidden" style={{ borderBottom: "1px solid #d4cfc6", backgroundColor: "#f0ebe0" }}>
+          <nav className="flex flex-col px-8 py-4 gap-4 text-sm font-medium" style={{ color: "#4a4a4a" }}>
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item}
+                onClick={() => { setActiveSection(item); setMenuOpen(false); }}
+                className="text-left bg-transparent border-0 cursor-pointer transition-colors hover:text-black"
+                style={{
+                  color: activeSection === item ? "#1a1a1a" : "#4a4a4a",
+                  fontFamily: "inherit",
+                  fontSize: "inherit",
+                  fontWeight: activeSection === item ? 600 : undefined,
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </nav>
+          <div className="flex items-center gap-4 px-8 pb-4" style={{ color: "#4a4a4a" }}>
+            <a href="https://x.com/jvlzloona" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="X / Twitter"><XIcon /></a>
+            <a href="https://www.instagram.com/jvloons/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+            <a href="https://www.linkedin.com/in/jvlz/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="LinkedIn"><LinkedInIcon /></a>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <main>
