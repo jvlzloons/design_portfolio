@@ -39,6 +39,9 @@ export default function AdminPage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
   const [categoryError, setCategoryError] = useState("");
+  const [orderDirty, setOrderDirty] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [orderError, setOrderError] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -84,6 +87,35 @@ export default function AdminPage() {
     setEditingProject(null);
     setLoading(true);
     await loadData();
+  }
+
+  function handleMove(index: number, direction: "up" | "down") {
+    const newProjects = [...projects];
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    [newProjects[index], newProjects[swapIndex]] = [newProjects[swapIndex], newProjects[index]];
+    const reordered = newProjects.map((p, i) => ({ ...p, sort_order: i }));
+    setProjects(reordered);
+    setOrderDirty(true);
+  }
+
+  async function handleSaveOrder() {
+    setSavingOrder(true);
+    setOrderError("");
+    try {
+      const token = await getToken();
+      if (!token) return;
+      await fetchAuthAPI("/admin/projects/reorder", token, {
+        method: "POST",
+        body: JSON.stringify({
+          items: projects.map((p) => ({ id: p.id, sort_order: p.sort_order })),
+        }),
+      });
+      setOrderDirty(false);
+    } catch (err) {
+      setOrderError(err instanceof Error ? err.message : "Failed to save order. Is the backend running?");
+    } finally {
+      setSavingOrder(false);
+    }
   }
 
   async function handleDelete(id: string) {
@@ -248,13 +280,31 @@ export default function AdminPage() {
           <p className="text-gray-400">Loading...</p>
         ) : (
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold mb-4">
-              Projects ({projects.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">
+                Projects ({projects.length})
+              </h2>
+              {(orderDirty || orderError) && (
+                <div className="flex items-center gap-3">
+                  {orderError && (
+                    <span className="text-xs text-red-400">{orderError}</span>
+                  )}
+                  {orderDirty && (
+                    <button
+                      onClick={handleSaveOrder}
+                      disabled={savingOrder}
+                      className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium hover:bg-green-500 disabled:opacity-50 transition-colors"
+                    >
+                      {savingOrder ? "Saving..." : "Save Order"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             {projects.length === 0 ? (
               <p className="text-gray-400">No projects yet. Create your first one!</p>
             ) : (
-              projects.map((project) => (
+              projects.map((project, index) => (
                 <div
                   key={project.id}
                   className="flex items-center gap-4 rounded-lg border border-gray-800 p-4"
@@ -282,6 +332,25 @@ export default function AdminPage() {
 
                   {/* Actions */}
                   <div className="flex items-center gap-3 flex-shrink-0">
+                    {/* Sort order buttons */}
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        onClick={() => handleMove(index, "up")}
+                        disabled={index === 0}
+                        className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
+                        title="Move up"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={() => handleMove(index, "down")}
+                        disabled={index === projects.length - 1}
+                        className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
+                        title="Move down"
+                      >
+                        ▼
+                      </button>
+                    </div>
                     <span
                       className={`text-xs px-2 py-1 rounded ${
                         project.is_published

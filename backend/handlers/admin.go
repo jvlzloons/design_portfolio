@@ -144,6 +144,46 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(p)
 }
 
+// Admin: reorder projects
+type ReorderItem struct {
+	ID        string `json:"id"`
+	SortOrder int    `json:"sort_order"`
+}
+
+type ReorderInput struct {
+	Items []ReorderItem `json:"items"`
+}
+
+func ReorderProjects(w http.ResponseWriter, r *http.Request) {
+	var input ReorderInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	tx, err := database.DB.Begin()
+	if err != nil {
+		http.Error(w, "Failed to begin transaction", http.StatusInternalServerError)
+		return
+	}
+
+	for _, item := range input.Items {
+		_, err := tx.Exec("UPDATE projects SET sort_order = $1 WHERE id = $2", item.SortOrder, item.ID)
+		if err != nil {
+			tx.Rollback()
+			http.Error(w, "Failed to update sort order", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		http.Error(w, "Failed to commit transaction", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // Admin: delete a project
 func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")

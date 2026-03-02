@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -26,8 +28,16 @@ func main() {
 
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	// CORS_ORIGINS env var: comma-separated list of allowed origins
+	// e.g. "http://localhost:5173,https://yourdomain.com"
+	rawOrigins := os.Getenv("CORS_ORIGINS")
+	if rawOrigins == "" {
+		rawOrigins = "http://localhost:5173"
+	}
+	allowedOrigins := strings.Split(rawOrigins, ",")
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
 		AllowCredentials: true,
@@ -47,12 +57,17 @@ func main() {
 		r.Use(customMiddleware.RequireAuth)
 		r.Get("/projects", handlers.AdminGetProjects)
 		r.Post("/projects", handlers.CreateProject)
+		r.Post("/projects/reorder", handlers.ReorderProjects)
 		r.Put("/projects/{id}", handlers.UpdateProject)
 		r.Delete("/projects/{id}", handlers.DeleteProject)
 		r.Post("/categories", handlers.CreateCategory)
 		r.Delete("/categories/{id}", handlers.DeleteCategory)
 	})
 
-	fmt.Println("Server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	fmt.Printf("Server running on :%s\n", port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }

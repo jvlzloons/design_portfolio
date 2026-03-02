@@ -151,9 +151,14 @@ export default function HomePage() {
         )}
 
         {activeSection === "Contact" && (
+          <>
           <div className="p-8">
-            <p className="text-sm" style={{ color: "#888" }}>Contact section coming soon.</p>
+            <p className="text-sm">Contact Info</p>
           </div>
+          <div className="p-8">
+            <p className="text-sm" style={{ color: "#888" }}>Josh Magdiel K. Villaluz</p>
+          </div>
+          </>
         )}
       </main>
     </div>
