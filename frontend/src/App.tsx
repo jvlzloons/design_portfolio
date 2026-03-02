@@ -3,6 +3,7 @@ import { useAuth } from "@clerk/clerk-react";
 import HomePage from "./pages/HomePage";
 import SignInPage from "./pages/SignInPage";
 import AdminPage from "./pages/AdminPage";
+import ProjectPage from "./pages/ProjectPage";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isSignedIn, isLoaded } = useAuth();
@@ -27,6 +28,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/projects/:slug" element={<ProjectPage />} />
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route
           path="/admin"

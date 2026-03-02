@@ -11,6 +11,7 @@ interface ProjectFormData {
   client: string;
   role: string;
   thumbnail_url: string;
+  images: string[];
   is_featured: boolean;
   is_published: boolean;
 }
@@ -41,6 +42,7 @@ export default function ProjectForm({
     client: initialValues.client ?? "",
     role: initialValues.role ?? "",
     thumbnail_url: initialValues.thumbnail_url ?? "",
+    images: initialValues.images ?? [],
     is_featured: initialValues.is_featured ?? false,
     is_published: initialValues.is_published ?? false,
   });
@@ -48,6 +50,7 @@ export default function ProjectForm({
   const [error, setError] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string>(initialValues.thumbnail_url ?? "");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   function handleTitleChange(value: string) {
     if (mode === "create") {
@@ -79,6 +82,27 @@ export default function ProjectForm({
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        setForm((prev) => ({ ...prev, images: [...prev.images, dataUrl] }));
+      };
+      reader.readAsDataURL(file);
+    });
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
+  }
+
+  function removeGalleryImage(index: number) {
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  }
+
   async function handleSubmit(e: { preventDefault(): void }) {
     e.preventDefault();
     setError("");
@@ -97,7 +121,7 @@ export default function ProjectForm({
         long_description: form.long_description || null,
         category: form.category,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
-        images: [],
+        images: form.images,
         thumbnail_url: form.thumbnail_url || null,
         year: form.year ? parseInt(form.year) : null,
         client: form.client || null,
@@ -125,7 +149,7 @@ export default function ProjectForm({
         </div>
       )}
 
-      {/* Thumbnail Image Upload */}
+      {/* Thumbnail */}
       <div>
         <label className={labelClass}>Thumbnail Image</label>
         <div className="space-y-3">
@@ -142,18 +166,8 @@ export default function ProjectForm({
             </div>
           )}
           <div className="flex items-center gap-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              id="thumbnail-upload"
-            />
-            <label
-              htmlFor="thumbnail-upload"
-              className="cursor-pointer rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors"
-            >
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="thumbnail-upload" />
+            <label htmlFor="thumbnail-upload" className="cursor-pointer rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
               {thumbnailPreview ? "Change image" : "Upload image"}
             </label>
             <span className="text-xs text-gray-500">or paste a URL below</span>
@@ -161,38 +175,54 @@ export default function ProjectForm({
           <input
             type="text"
             value={form.thumbnail_url.startsWith("data:") ? "" : form.thumbnail_url}
-            onChange={(e) => {
-              setForm({ ...form, thumbnail_url: e.target.value });
-              setThumbnailPreview(e.target.value);
-            }}
+            onChange={(e) => { setForm({ ...form, thumbnail_url: e.target.value }); setThumbnailPreview(e.target.value); }}
             placeholder="https://example.com/image.jpg"
             className={inputClass}
           />
         </div>
       </div>
 
+      {/* Gallery Images */}
+      <div>
+        <label className={labelClass}>Gallery Images</label>
+        <div className="space-y-3">
+          {form.images.length > 0 && (
+            <div className="grid grid-cols-3 gap-2">
+              {form.images.map((src, i) => (
+                <div key={i} className="relative aspect-video rounded-lg overflow-hidden border border-gray-700">
+                  <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(i)}
+                    className="absolute top-1 right-1 rounded-full bg-gray-900/80 text-gray-300 hover:text-white w-6 h-6 flex items-center justify-center text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div>
+            <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" />
+            <label htmlFor="gallery-upload" className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
+              <span>+</span>
+              <span>Add images</span>
+            </label>
+            <p className="mt-1 text-xs text-gray-500">Select multiple files at once. Images appear in order on the project page.</p>
+          </div>
+        </div>
+      </div>
+
       {/* Title */}
       <div>
         <label className={labelClass}>Title *</label>
-        <input
-          type="text"
-          value={form.title}
-          onChange={(e) => handleTitleChange(e.target.value)}
-          placeholder="Project title"
-          className={inputClass}
-        />
+        <input type="text" value={form.title} onChange={(e) => handleTitleChange(e.target.value)} placeholder="Project title" className={inputClass} />
       </div>
 
       {/* Slug */}
       <div>
         <label className={labelClass}>Slug</label>
-        <input
-          type="text"
-          value={form.slug}
-          onChange={(e) => setForm({ ...form, slug: e.target.value })}
-          placeholder="project-slug"
-          className={inputClass}
-        />
+        <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="project-slug" className={inputClass} />
         <p className="mt-1 text-xs text-gray-500">
           {mode === "create" ? "Auto-generated from title. Edit if needed." : "Changing the slug will break existing links."}
         </p>
@@ -201,16 +231,10 @@ export default function ProjectForm({
       {/* Category */}
       <div>
         <label className={labelClass}>Category *</label>
-        <select
-          value={form.category}
-          onChange={(e) => setForm({ ...form, category: e.target.value })}
-          className={inputClass}
-        >
+        <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputClass}>
           <option value="">Select a category</option>
           {categories.map((cat) => (
-            <option key={cat.id} value={cat.name}>
-              {cat.name}
-            </option>
+            <option key={cat.id} value={cat.name}>{cat.name}</option>
           ))}
         </select>
       </div>
@@ -218,111 +242,57 @@ export default function ProjectForm({
       {/* Description */}
       <div>
         <label className={labelClass}>Short Description</label>
-        <textarea
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          placeholder="Brief summary of the project"
-          rows={2}
-          className={inputClass}
-        />
+        <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Brief summary of the project" rows={2} className={inputClass} />
       </div>
 
       {/* Long Description */}
       <div>
         <label className={labelClass}>Long Description</label>
-        <textarea
-          value={form.long_description}
-          onChange={(e) => setForm({ ...form, long_description: e.target.value })}
-          placeholder="Detailed write-up about the project"
-          rows={5}
-          className={inputClass}
-        />
+        <textarea value={form.long_description} onChange={(e) => setForm({ ...form, long_description: e.target.value })} placeholder="Detailed write-up about the project" rows={5} className={inputClass} />
       </div>
 
       {/* Tags */}
       <div>
         <label className={labelClass}>Tags</label>
-        <input
-          type="text"
-          value={form.tags}
-          onChange={(e) => setForm({ ...form, tags: e.target.value })}
-          placeholder="logo, identity, vector (comma separated)"
-          className={inputClass}
-        />
+        <input type="text" value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="logo, identity, vector (comma separated)" className={inputClass} />
       </div>
 
       {/* Year, Client, Role */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className={labelClass}>Year</label>
-          <input
-            type="number"
-            value={form.year}
-            onChange={(e) => setForm({ ...form, year: e.target.value })}
-            placeholder="2025"
-            className={inputClass}
-          />
+          <input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2025" className={inputClass} />
         </div>
         <div>
           <label className={labelClass}>Client</label>
-          <input
-            type="text"
-            value={form.client}
-            onChange={(e) => setForm({ ...form, client: e.target.value })}
-            placeholder="Client name"
-            className={inputClass}
-          />
+          <input type="text" value={form.client} onChange={(e) => setForm({ ...form, client: e.target.value })} placeholder="Client name" className={inputClass} />
         </div>
         <div>
           <label className={labelClass}>Role</label>
-          <input
-            type="text"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
-            placeholder="Lead Designer"
-            className={inputClass}
-          />
+          <input type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Lead Designer" className={inputClass} />
         </div>
       </div>
 
       {/* Toggles */}
       <div className="flex gap-6">
         <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.is_featured}
-            onChange={(e) => setForm({ ...form, is_featured: e.target.checked })}
-            className="rounded border-gray-700"
-          />
+          <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} className="rounded border-gray-700" />
           Featured project
         </label>
         <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.is_published}
-            onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
-            className="rounded border-gray-700"
-          />
+          <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} className="rounded border-gray-700" />
           Published
         </label>
       </div>
 
       {/* Buttons */}
       <div className="flex gap-3 pt-2">
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 transition-colors"
-        >
+        <button type="submit" disabled={submitting} className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 transition-colors">
           {submitting
             ? mode === "edit" ? "Saving..." : "Creating..."
             : mode === "edit" ? "Save Changes" : "Create Project"}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-lg border border-gray-700 px-6 py-2 text-sm font-medium text-gray-300 hover:border-gray-500 transition-colors"
-        >
+        <button type="button" onClick={onCancel} className="rounded-lg border border-gray-700 px-6 py-2 text-sm font-medium text-gray-300 hover:border-gray-500 transition-colors">
           Cancel
         </button>
       </div>

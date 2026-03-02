@@ -223,6 +223,7 @@ export default function AdminPage() {
                 client: editingProject.client ?? "",
                 role: editingProject.role ?? "",
                 thumbnail_url: editingProject.thumbnail_url ?? "",
+                images: editingProject.images ?? [],
                 is_featured: editingProject.is_featured,
                 is_published: editingProject.is_published,
               }}
