@@ -10,6 +10,7 @@ interface ProjectFormData {
   year: string;
   client: string;
   role: string;
+  github_url: string;
   thumbnail_url: string;
   images: string[];
   is_featured: boolean;
@@ -41,6 +42,7 @@ export default function ProjectForm({
     year: initialValues.year ?? "",
     client: initialValues.client ?? "",
     role: initialValues.role ?? "",
+    github_url: initialValues.github_url ?? "",
     thumbnail_url: initialValues.thumbnail_url ?? "",
     images: initialValues.images ?? [],
     is_featured: initialValues.is_featured ?? false,
@@ -127,6 +129,7 @@ export default function ProjectForm({
         year: form.year ? parseInt(form.year) : null,
         client: form.client || null,
         role: form.role || null,
+        github_url: form.github_url || null,
         is_featured: form.is_featured,
         is_published: form.is_published,
         sort_order: 0,
@@ -305,6 +308,12 @@ export default function ProjectForm({
           <label className={labelClass}>Role</label>
           <input type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="Lead Designer" className={inputClass} />
         </div>
+      </div>
+
+      {/* GitHub URL */}
+      <div>
+        <label className={labelClass}>GitHub URL</label>
+        <input type="text" value={form.github_url} onChange={(e) => setForm({ ...form, github_url: e.target.value })} placeholder="https://github.com/username/repo" className={inputClass} />
       </div>
 
       {/* Toggles */}

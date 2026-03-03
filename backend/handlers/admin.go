@@ -21,6 +21,7 @@ type CreateProjectInput struct {
 	Year            *int     `json:"year"`
 	Client          *string  `json:"client"`
 	Role            *string  `json:"role"`
+	GithubURL       *string  `json:"github_url"`
 	IsFeatured      bool     `json:"is_featured"`
 	IsPublished     bool     `json:"is_published"`
 	SortOrder       int      `json:"sort_order"`
@@ -31,7 +32,7 @@ func AdminGetProjects(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query(
 		`SELECT id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
-		year, client, role, is_featured, is_published, sort_order
+		year, client, role, github_url, is_featured, is_published, sort_order
 		FROM projects ORDER BY sort_order`,
 	)
 	if err != nil {
@@ -47,7 +48,7 @@ func AdminGetProjects(w http.ResponseWriter, r *http.Request) {
 			&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 			&p.Description, &p.LongDescription, &p.Category,
 			pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
-			&p.Year, &p.Client, &p.Role, &p.IsFeatured,
+			&p.Year, &p.Client, &p.Role, &p.GithubURL, &p.IsFeatured,
 			&p.IsPublished, &p.SortOrder,
 		)
 		if err != nil {
@@ -77,21 +78,21 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 	var p Project
 	err := database.DB.QueryRow(
 		`INSERT INTO projects (title, slug, description, long_description,
-		category, tags, thumbnail_url, images, year, client, role,
+		category, tags, thumbnail_url, images, year, client, role, github_url,
 		is_featured, is_published, sort_order)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
 		RETURNING id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
-		year, client, role, is_featured, is_published, sort_order`,
+		year, client, role, github_url, is_featured, is_published, sort_order`,
 		input.Title, input.Slug, input.Description, input.LongDescription,
 		input.Category, pq.Array(input.Tags), input.ThumbnailURL,
-		pq.Array(input.Images), input.Year, input.Client, input.Role,
+		pq.Array(input.Images), input.Year, input.Client, input.Role, input.GithubURL,
 		input.IsFeatured, input.IsPublished, input.SortOrder,
 	).Scan(
 		&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 		&p.Description, &p.LongDescription, &p.Category,
 		pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
-		&p.Year, &p.Client, &p.Role, &p.IsFeatured,
+		&p.Year, &p.Client, &p.Role, &p.GithubURL, &p.IsFeatured,
 		&p.IsPublished, &p.SortOrder,
 	)
 	if err != nil {
@@ -118,21 +119,21 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 	err := database.DB.QueryRow(
 		`UPDATE projects SET title=$1, slug=$2, description=$3,
 		long_description=$4, category=$5, tags=$6, thumbnail_url=$7,
-		images=$8, year=$9, client=$10, role=$11, is_featured=$12,
-		is_published=$13, sort_order=$14
-		WHERE id=$15
+		images=$8, year=$9, client=$10, role=$11, github_url=$12,
+		is_featured=$13, is_published=$14, sort_order=$15
+		WHERE id=$16
 		RETURNING id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
-		year, client, role, is_featured, is_published, sort_order`,
+		year, client, role, github_url, is_featured, is_published, sort_order`,
 		input.Title, input.Slug, input.Description, input.LongDescription,
 		input.Category, pq.Array(input.Tags), input.ThumbnailURL,
-		pq.Array(input.Images), input.Year, input.Client, input.Role,
+		pq.Array(input.Images), input.Year, input.Client, input.Role, input.GithubURL,
 		input.IsFeatured, input.IsPublished, input.SortOrder, id,
 	).Scan(
 		&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 		&p.Description, &p.LongDescription, &p.Category,
 		pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
-		&p.Year, &p.Client, &p.Role, &p.IsFeatured,
+		&p.Year, &p.Client, &p.Role, &p.GithubURL, &p.IsFeatured,
 		&p.IsPublished, &p.SortOrder,
 	)
 	if err != nil {

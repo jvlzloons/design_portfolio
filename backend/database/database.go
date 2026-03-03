@@ -76,5 +76,10 @@ func migrate() {
 		log.Fatal("Failed to create projects table:", err)
 	}
 
+	_, err = DB.Exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS github_url TEXT`)
+	if err != nil {
+		log.Fatal("Failed to add github_url column:", err)
+	}
+
 	fmt.Println("Database migration complete")
 }

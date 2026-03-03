@@ -16,6 +16,7 @@ interface Project {
   year: number | null;
   client: string | null;
   role: string | null;
+  github_url: string | null;
   is_featured: boolean;
   is_published: boolean;
   sort_order: number;
@@ -254,6 +255,7 @@ export default function AdminPage() {
                 year: editingProject.year?.toString() ?? "",
                 client: editingProject.client ?? "",
                 role: editingProject.role ?? "",
+                github_url: editingProject.github_url ?? "",
                 thumbnail_url: editingProject.thumbnail_url ?? "",
                 images: editingProject.images ?? [],
                 is_featured: editingProject.is_featured,

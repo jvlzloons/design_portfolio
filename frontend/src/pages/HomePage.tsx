@@ -8,6 +8,7 @@ interface Project {
   description: string | null;
   category: string;
   thumbnail_url: string | null;
+  github_url: string | null;
   is_featured: boolean;
 }
 
@@ -195,14 +196,15 @@ export default function HomePage() {
 
       {/* Main content */}
       <main>
-        {activeSection === "Design" && (
-          loading ? (
+        {activeSection === "Design" && (() => {
+          const filtered = projects.filter((p) => p.category.toLowerCase() !== "ict");
+          return loading ? (
             <p className="p-8 text-sm" style={{ color: "#888" }}>Loading...</p>
-          ) : projects.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <p className="p-8 text-sm" style={{ color: "#888" }}>No projects yet.</p>
           ) : (
             <div className="grid grid-cols-3" style={{ gap: "2px" }}>
-              {projects.map((project) => (
+              {filtered.map((project) => (
                 <a
                   key={project.id}
                   href={`/projects/${project.slug}`}
@@ -232,14 +234,63 @@ export default function HomePage() {
                 </a>
               ))}
             </div>
-          )
-        )}
+          );
+        })()}
 
-        {activeSection === "ICT" && (
-          <div className="p-8">
-            <p className="text-sm" style={{ color: "#888" }}>ICT projects coming soon.</p>
-          </div>
-        )}
+        {activeSection === "ICT" && (() => {
+          const filtered = projects.filter((p) => p.category.toLowerCase() === "ict");
+          return loading ? (
+            <p className="p-8 text-sm" style={{ color: "#888" }}>Loading...</p>
+          ) : filtered.length === 0 ? (
+            <p className="p-8 text-sm" style={{ color: "#888" }}>No ICT projects yet.</p>
+          ) : (
+            <div className="grid grid-cols-3" style={{ gap: "2px" }}>
+              {filtered.map((project) => (
+                <a
+                  key={project.id}
+                  href={`/projects/${project.slug}`}
+                  className="relative block overflow-hidden group"
+                  style={{ aspectRatio: "3/2" }}
+                >
+                  {project.thumbnail_url ? (
+                    <img
+                      src={project.thumbnail_url}
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
+                      <span className="text-sm" style={{ color: "#888" }}>No image</span>
+                    </div>
+                  )}
+                  <div
+                    className="absolute inset-0 flex items-end justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 65%)" }}
+                  >
+                    <div>
+                      <p className="text-white font-semibold text-sm leading-tight">{project.title}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{project.category}</p>
+                    </div>
+                    {project.github_url && (
+                      <a
+                        href={project.github_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
+                        style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}
+                        aria-label="View on GitHub"
+                      >
+                        <GitHubIcon />
+                        <span>GitHub</span>
+                      </a>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          );
+        })()}
 
         {activeSection === "Contact" && (
           <div className="flex flex-col items-center px-6 py-16" style={{ minHeight: "70vh" }}>
