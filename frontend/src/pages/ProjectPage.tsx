@@ -12,10 +12,13 @@ interface Project {
   tags: string[];
   thumbnail_url: string | null;
   images: string[];
-  year: number | null;
+  year: string | null;
   client: string | null;
   role: string | null;
   github_url: string | null;
+  client_instagram: string | null;
+  client_website: string | null;
+  client_x: string | null;
 }
 
 function XIcon() {
@@ -180,7 +183,7 @@ export default function ProjectPage() {
           {project.client && (
             <>
               <span style={{ color: "#d4cfc6" }}>·</span>
-              <span className="text-sm">{project.client}</span>
+              <span className="text-sm">Client: {project.client}</span>
             </>
           )}
           {project.role && (
@@ -217,6 +220,48 @@ export default function ProjectPage() {
           >
             {description}
           </p>
+        )}
+
+        {/* Client Links */}
+        {(project.client_instagram || project.client_website || project.client_x) && (
+          <div className="flex flex-wrap items-center gap-5 mb-16" style={{ color: "#4a4a4a" }}>
+            <span className="text-xs uppercase tracking-widest" style={{ fontSize: "0.65rem", color: "#aaa" }}>Client</span>
+            {project.client_website && (
+              <a
+                href={project.client_website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm transition-colors hover:text-black"
+                style={{ borderBottom: "1px solid #c4bfb6", paddingBottom: "1px" }}
+              >
+                Website
+              </a>
+            )}
+            {project.client_instagram && (
+              <a
+                href={project.client_instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm transition-colors hover:text-black"
+                style={{ borderBottom: "1px solid #c4bfb6", paddingBottom: "1px" }}
+              >
+                <InstagramIcon />
+                Instagram
+              </a>
+            )}
+            {project.client_x && (
+              <a
+                href={project.client_x}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm transition-colors hover:text-black"
+                style={{ borderBottom: "1px solid #c4bfb6", paddingBottom: "1px" }}
+              >
+                <XIcon />
+                X
+              </a>
+            )}
+          </div>
         )}
 
         {/* Gallery */}

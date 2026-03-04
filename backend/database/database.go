@@ -81,5 +81,25 @@ func migrate() {
 		log.Fatal("Failed to add github_url column:", err)
 	}
 
+	_, err = DB.Exec(`ALTER TABLE projects ALTER COLUMN year TYPE TEXT USING year::TEXT`)
+	if err != nil {
+		log.Fatal("Failed to alter year column to TEXT:", err)
+	}
+
+	_, err = DB.Exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_instagram TEXT`)
+	if err != nil {
+		log.Fatal("Failed to add client_instagram column:", err)
+	}
+
+	_, err = DB.Exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_website TEXT`)
+	if err != nil {
+		log.Fatal("Failed to add client_website column:", err)
+	}
+
+	_, err = DB.Exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_x TEXT`)
+	if err != nil {
+		log.Fatal("Failed to add client_x column:", err)
+	}
+
 	fmt.Println("Database migration complete")
 }

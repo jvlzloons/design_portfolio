@@ -21,10 +21,13 @@ type Project struct {
 	Tags            []string `json:"tags"`
 	ThumbnailURL    *string  `json:"thumbnail_url"`
 	Images          []string `json:"images"`
-	Year            *int     `json:"year"`
+	Year            *string  `json:"year"`
 	Client          *string  `json:"client"`
 	Role            *string  `json:"role"`
 	GithubURL       *string  `json:"github_url"`
+	ClientInstagram *string  `json:"client_instagram"`
+	ClientWebsite   *string  `json:"client_website"`
+	ClientX         *string  `json:"client_x"`
 	IsFeatured      bool     `json:"is_featured"`
 	IsPublished     bool     `json:"is_published"`
 	SortOrder       int      `json:"sort_order"`
@@ -35,7 +38,8 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query(
 		`SELECT id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
-		year, client, role, github_url, is_featured, is_published, sort_order
+		year, client, role, github_url, client_instagram, client_website, client_x,
+		is_featured, is_published, sort_order
 		FROM projects WHERE is_published = true ORDER BY sort_order`,
 	)
 	if err != nil {
@@ -51,8 +55,9 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 			&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 			&p.Description, &p.LongDescription, &p.Category,
 			pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
-			&p.Year, &p.Client, &p.Role, &p.GithubURL, &p.IsFeatured,
-			&p.IsPublished, &p.SortOrder,
+			&p.Year, &p.Client, &p.Role, &p.GithubURL,
+			&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+			&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 		)
 		if err != nil {
 			http.Error(w, "Failed to scan project", http.StatusInternalServerError)
@@ -73,14 +78,16 @@ func GetProjectBySlug(w http.ResponseWriter, r *http.Request) {
 	err := database.DB.QueryRow(
 		`SELECT id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
-		year, client, role, github_url, is_featured, is_published, sort_order
+		year, client, role, github_url, client_instagram, client_website, client_x,
+		is_featured, is_published, sort_order
 		FROM projects WHERE slug = $1 AND is_published = true`, slug,
 	).Scan(
 		&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 		&p.Description, &p.LongDescription, &p.Category,
 		pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
-		&p.Year, &p.Client, &p.Role, &p.GithubURL, &p.IsFeatured,
-		&p.IsPublished, &p.SortOrder,
+		&p.Year, &p.Client, &p.Role, &p.GithubURL,
+		&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+		&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 	)
 	if err != nil {
 		http.Error(w, "Project not found", http.StatusNotFound)

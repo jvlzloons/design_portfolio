@@ -11,6 +11,9 @@ interface ProjectFormData {
   client: string;
   role: string;
   github_url: string;
+  client_instagram: string;
+  client_website: string;
+  client_x: string;
   thumbnail_url: string;
   images: string[];
   is_featured: boolean;
@@ -43,6 +46,9 @@ export default function ProjectForm({
     client: initialValues.client ?? "",
     role: initialValues.role ?? "",
     github_url: initialValues.github_url ?? "",
+    client_instagram: initialValues.client_instagram ?? "",
+    client_website: initialValues.client_website ?? "",
+    client_x: initialValues.client_x ?? "",
     thumbnail_url: initialValues.thumbnail_url ?? "",
     images: initialValues.images ?? [],
     is_featured: initialValues.is_featured ?? false,
@@ -126,10 +132,13 @@ export default function ProjectForm({
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
         images: form.images,
         thumbnail_url: form.thumbnail_url || null,
-        year: form.year ? parseInt(form.year) : null,
+        year: form.year || null,
         client: form.client || null,
         role: form.role || null,
         github_url: form.github_url || null,
+        client_instagram: form.client_instagram || null,
+        client_website: form.client_website || null,
+        client_x: form.client_x || null,
         is_featured: form.is_featured,
         is_published: form.is_published,
         sort_order: 0,
@@ -298,7 +307,7 @@ export default function ProjectForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className={labelClass}>Year</label>
-          <input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2025" className={inputClass} />
+          <input type="text" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} placeholder="2024 – present" className={inputClass} />
         </div>
         <div>
           <label className={labelClass}>Client</label>
@@ -314,6 +323,16 @@ export default function ProjectForm({
       <div>
         <label className={labelClass}>GitHub URL</label>
         <input type="text" value={form.github_url} onChange={(e) => setForm({ ...form, github_url: e.target.value })} placeholder="https://github.com/username/repo" className={inputClass} />
+      </div>
+
+      {/* Client Links */}
+      <div>
+        <label className={labelClass}>Client Links <span className="text-gray-500 font-normal">(optional)</span></label>
+        <div className="space-y-2">
+          <input type="text" value={form.client_instagram} onChange={(e) => setForm({ ...form, client_instagram: e.target.value })} placeholder="Client Instagram URL" className={inputClass} />
+          <input type="text" value={form.client_website} onChange={(e) => setForm({ ...form, client_website: e.target.value })} placeholder="Client Website URL" className={inputClass} />
+          <input type="text" value={form.client_x} onChange={(e) => setForm({ ...form, client_x: e.target.value })} placeholder="Client X / Twitter URL" className={inputClass} />
+        </div>
       </div>
 
       {/* Toggles */}

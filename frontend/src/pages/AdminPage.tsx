@@ -13,10 +13,13 @@ interface Project {
   tags: string[];
   thumbnail_url: string | null;
   images: string[];
-  year: number | null;
+  year: string | null;
   client: string | null;
   role: string | null;
   github_url: string | null;
+  client_instagram: string | null;
+  client_website: string | null;
+  client_x: string | null;
   is_featured: boolean;
   is_published: boolean;
   sort_order: number;
@@ -256,6 +259,9 @@ export default function AdminPage() {
                 client: editingProject.client ?? "",
                 role: editingProject.role ?? "",
                 github_url: editingProject.github_url ?? "",
+                client_instagram: editingProject.client_instagram ?? "",
+                client_website: editingProject.client_website ?? "",
+                client_x: editingProject.client_x ?? "",
                 thumbnail_url: editingProject.thumbnail_url ?? "",
                 images: editingProject.images ?? [],
                 is_featured: editingProject.is_featured,
