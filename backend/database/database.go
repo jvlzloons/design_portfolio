@@ -81,9 +81,19 @@ func migrate() {
 		log.Fatal("Failed to add github_url column:", err)
 	}
 
-	_, err = DB.Exec(`ALTER TABLE projects ALTER COLUMN year TYPE TEXT USING year::TEXT`)
+	_, err = DB.Exec(`
+		DO $$
+		BEGIN
+			IF EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'projects' AND column_name = 'year' AND data_type = 'integer'
+			) THEN
+				ALTER TABLE projects ALTER COLUMN year TYPE TEXT USING year::TEXT;
+			END IF;
+		END $$
+	`)
 	if err != nil {
-		log.Fatal("Failed to alter year column to TEXT:", err)
+		log.Fatal("Failed to ensure year column is TEXT:", err)
 	}
 
 	_, err = DB.Exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_instagram TEXT`)
