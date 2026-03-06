@@ -99,9 +99,9 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0ebe0", fontFamily: "'Space Grotesk', sans-serif" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#f0ebe0", fontFamily: "'Space Grotesk', sans-serif"}}>
       {/* Header */}
-      <header style={{ borderBottom: "1px solid #d4cfc6" }} className="flex items-center px-8 py-4 relative">
+      <header style={{ borderBottom: "1px solid #d4cfc6", padding: "2rem"}} className="flex items-center px-8 py-4 relative">
         {/* Left nav */}
         <nav className="hidden md:flex items-center gap-1 text-sm font-medium" style={{ color: "#4a4a4a" }}>
           {NAV_ITEMS.map((item, i) => (
@@ -129,7 +129,7 @@ export default function HomePage() {
           <img
             src="https://res.cloudinary.com/dgdtee5ls/image/upload/v1772827247/Logo_copy_o1icuq.png"
             alt="JV"
-            style={{ height: "2rem", width: "auto", display: "block" }}
+            style={{ height: "8rem", width: "auto", display: "block"}}
           />
         </a>
 
