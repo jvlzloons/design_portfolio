@@ -42,7 +42,7 @@ func RequireAuth(next http.Handler) http.Handler {
 		}
 
 		// Check against allowed admin user ID
-		adminUserID := os.Getenv("user_3AaTOSc9j7PJlU2ufrgj1UWH5nP")
+		adminUserID := os.Getenv("ADMIN_USER_ID")
 		if adminUserID != "" && claims.Subject != adminUserID {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
