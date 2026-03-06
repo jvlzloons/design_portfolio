@@ -126,9 +126,11 @@ export default function HomePage() {
 
         {/* Center logo */}
         <a href="/" className="absolute left-1/2 -translate-x-1/2">
-          <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.5rem", fontWeight: 700, color: "#1a1a1a", letterSpacing: "-0.02em" }}>
-            JV
-          </span>
+          <img
+            src="https://res.cloudinary.com/dgdtee5ls/image/upload/v1772827247/Logo_copy_o1icuq.png"
+            alt="JV"
+            style={{ height: "2rem", width: "auto", display: "block" }}
+          />
         </a>
 
         {/* Right social icons - desktop only */}
