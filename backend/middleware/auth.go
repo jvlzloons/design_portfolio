@@ -41,13 +41,6 @@ func RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		// Check against allowed admin user ID
-		adminUserID := os.Getenv("ADMIN_USER_ID")
-		if adminUserID != "" && claims.Subject != adminUserID {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-
 		// Add user ID to request context
 		ctx := context.WithValue(r.Context(), UserIDKey, claims.Subject)
 		next.ServeHTTP(w, r.WithContext(ctx))
