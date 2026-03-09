@@ -1,5 +1,10 @@
 import { useRef, useState } from "react";
 
+interface ImageCaption {
+  title: string;
+  subtitle: string;
+}
+
 interface ProjectFormData {
   title: string;
   slug: string;
@@ -16,6 +21,7 @@ interface ProjectFormData {
   client_x: string;
   thumbnail_url: string;
   images: string[];
+  image_captions: ImageCaption[];
   is_featured: boolean;
   is_published: boolean;
 }
@@ -24,7 +30,7 @@ interface ProjectFormProps {
   categories: { id: string; name: string; slug: string }[];
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   onCancel: () => void;
-  initialValues?: Partial<ProjectFormData>;
+  initialValues?: Partial<ProjectFormData & { image_captions: ImageCaption[] }>;
   mode?: "create" | "edit";
 }
 
@@ -51,6 +57,7 @@ export default function ProjectForm({
     client_x: initialValues.client_x ?? "",
     thumbnail_url: initialValues.thumbnail_url ?? "",
     images: initialValues.images ?? [],
+    image_captions: initialValues.image_captions ?? [],
     is_featured: initialValues.is_featured ?? false,
     is_published: initialValues.is_published ?? false,
   });
@@ -98,7 +105,11 @@ export default function ProjectForm({
       const reader = new FileReader();
       reader.onload = (event) => {
         const dataUrl = event.target?.result as string;
-        setForm((prev) => ({ ...prev, images: [...prev.images, dataUrl] }));
+        setForm((prev) => ({
+          ...prev,
+          images: [...prev.images, dataUrl],
+          image_captions: [...prev.image_captions, { title: "", subtitle: "" }],
+        }));
       };
       reader.readAsDataURL(file);
     });
@@ -109,7 +120,17 @@ export default function ProjectForm({
     setForm((prev) => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index),
+      image_captions: prev.image_captions.filter((_, i) => i !== index),
     }));
+  }
+
+  function updateCaption(index: number, field: keyof ImageCaption, value: string) {
+    setForm((prev) => {
+      const captions = [...prev.image_captions];
+      while (captions.length <= index) captions.push({ title: "", subtitle: "" });
+      captions[index] = { ...captions[index], [field]: value };
+      return { ...prev, image_captions: captions };
+    });
   }
 
   async function handleSubmit(e: { preventDefault(): void }) {
@@ -131,6 +152,7 @@ export default function ProjectForm({
         category: form.category,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
         images: form.images,
+        image_captions: form.image_captions,
         thumbnail_url: form.thumbnail_url || null,
         year: form.year || null,
         client: form.client || null,
@@ -200,14 +222,32 @@ export default function ProjectForm({
         <label className={labelClass}>Gallery Images</label>
         <div className="space-y-3">
           {form.images.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-2">
               {form.images.map((src, i) => (
-                <div key={i} className="relative aspect-video rounded-lg overflow-hidden border border-gray-700">
-                  <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                <div key={i} className="flex gap-3 items-start rounded-lg border border-gray-700 p-3">
+                  <div className="w-24 h-16 flex-shrink-0 rounded overflow-hidden border border-gray-600">
+                    <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex-1 space-y-1.5">
+                    <input
+                      type="text"
+                      value={form.image_captions[i]?.title ?? ""}
+                      onChange={(e) => updateCaption(i, "title", e.target.value)}
+                      placeholder="Caption title (optional)"
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
+                      value={form.image_captions[i]?.subtitle ?? ""}
+                      onChange={(e) => updateCaption(i, "subtitle", e.target.value)}
+                      placeholder="Caption subtitle (optional)"
+                      className={inputClass}
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeGalleryImage(i)}
-                    className="absolute top-1 right-1 rounded-full bg-gray-900/80 text-gray-300 hover:text-white w-6 h-6 flex items-center justify-center text-xs"
+                    className="text-gray-500 hover:text-white transition-colors p-1 flex-shrink-0"
                   >
                     ✕
                   </button>
@@ -233,7 +273,11 @@ export default function ProjectForm({
                   if (e.key === "Enter") {
                     e.preventDefault();
                     if (galleryUrlInput.trim()) {
-                      setForm((prev) => ({ ...prev, images: [...prev.images, galleryUrlInput.trim()] }));
+                      setForm((prev) => ({
+                        ...prev,
+                        images: [...prev.images, galleryUrlInput.trim()],
+                        image_captions: [...prev.image_captions, { title: "", subtitle: "" }],
+                      }));
                       setGalleryUrlInput("");
                     }
                   }
@@ -245,7 +289,11 @@ export default function ProjectForm({
                 type="button"
                 onClick={() => {
                   if (galleryUrlInput.trim()) {
-                    setForm((prev) => ({ ...prev, images: [...prev.images, galleryUrlInput.trim()] }));
+                    setForm((prev) => ({
+                      ...prev,
+                      images: [...prev.images, galleryUrlInput.trim()],
+                      image_captions: [...prev.image_captions, { title: "", subtitle: "" }],
+                    }));
                     setGalleryUrlInput("");
                   }
                 }}

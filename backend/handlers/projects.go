@@ -9,6 +9,11 @@ import (
 	"github.com/lib/pq"
 )
 
+type ImageCaption struct {
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+}
+
 type Project struct {
 	ID              string   `json:"id"`
 	CreatedAt       string   `json:"created_at"`
@@ -20,17 +25,18 @@ type Project struct {
 	Category        string   `json:"category"`
 	Tags            []string `json:"tags"`
 	ThumbnailURL    *string  `json:"thumbnail_url"`
-	Images          []string `json:"images"`
-	Year            *string  `json:"year"`
-	Client          *string  `json:"client"`
-	Role            *string  `json:"role"`
-	GithubURL       *string  `json:"github_url"`
-	ClientInstagram *string  `json:"client_instagram"`
-	ClientWebsite   *string  `json:"client_website"`
-	ClientX         *string  `json:"client_x"`
-	IsFeatured      bool     `json:"is_featured"`
-	IsPublished     bool     `json:"is_published"`
-	SortOrder       int      `json:"sort_order"`
+	Images          []string       `json:"images"`
+	Year            *string        `json:"year"`
+	Client          *string        `json:"client"`
+	Role            *string        `json:"role"`
+	GithubURL       *string        `json:"github_url"`
+	ClientInstagram *string        `json:"client_instagram"`
+	ClientWebsite   *string        `json:"client_website"`
+	ClientX         *string        `json:"client_x"`
+	ImageCaptions   []ImageCaption `json:"image_captions"`
+	IsFeatured      bool           `json:"is_featured"`
+	IsPublished     bool           `json:"is_published"`
+	SortOrder       int            `json:"sort_order"`
 }
 
 // Public: get published projects
@@ -39,7 +45,7 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 		`SELECT id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
 		year, client, role, github_url, client_instagram, client_website, client_x,
-		is_featured, is_published, sort_order
+		image_captions, is_featured, is_published, sort_order
 		FROM projects WHERE is_published = true ORDER BY sort_order`,
 	)
 	if err != nil {
@@ -51,17 +57,23 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	projects := []Project{}
 	for rows.Next() {
 		var p Project
+		var captionsJSON []byte
 		err := rows.Scan(
 			&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 			&p.Description, &p.LongDescription, &p.Category,
 			pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
 			&p.Year, &p.Client, &p.Role, &p.GithubURL,
 			&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+			&captionsJSON,
 			&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 		)
 		if err != nil {
 			http.Error(w, "Failed to scan project", http.StatusInternalServerError)
 			return
+		}
+		json.Unmarshal(captionsJSON, &p.ImageCaptions)
+		if p.ImageCaptions == nil {
+			p.ImageCaptions = []ImageCaption{}
 		}
 		projects = append(projects, p)
 	}
@@ -75,11 +87,12 @@ func GetProjectBySlug(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
 	var p Project
+	var captionsJSON []byte
 	err := database.DB.QueryRow(
 		`SELECT id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
 		year, client, role, github_url, client_instagram, client_website, client_x,
-		is_featured, is_published, sort_order
+		image_captions, is_featured, is_published, sort_order
 		FROM projects WHERE slug = $1 AND is_published = true`, slug,
 	).Scan(
 		&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
@@ -87,11 +100,16 @@ func GetProjectBySlug(w http.ResponseWriter, r *http.Request) {
 		pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
 		&p.Year, &p.Client, &p.Role, &p.GithubURL,
 		&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+		&captionsJSON,
 		&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 	)
 	if err != nil {
 		http.Error(w, "Project not found", http.StatusNotFound)
 		return
+	}
+	json.Unmarshal(captionsJSON, &p.ImageCaptions)
+	if p.ImageCaptions == nil {
+		p.ImageCaptions = []ImageCaption{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

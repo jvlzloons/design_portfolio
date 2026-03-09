@@ -111,5 +111,10 @@ func migrate() {
 		log.Fatal("Failed to add client_x column:", err)
 	}
 
+	_, err = DB.Exec(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS image_captions JSONB NOT NULL DEFAULT '[]'`)
+	if err != nil {
+		log.Fatal("Failed to add image_captions column:", err)
+	}
+
 	fmt.Println("Database migration complete")
 }

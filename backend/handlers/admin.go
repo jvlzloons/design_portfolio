@@ -17,17 +17,18 @@ type CreateProjectInput struct {
 	Category        string   `json:"category"`
 	Tags            []string `json:"tags"`
 	ThumbnailURL    *string  `json:"thumbnail_url"`
-	Images          []string `json:"images"`
-	Year            *string  `json:"year"`
-	Client          *string  `json:"client"`
-	Role            *string  `json:"role"`
-	GithubURL       *string  `json:"github_url"`
-	ClientInstagram *string  `json:"client_instagram"`
-	ClientWebsite   *string  `json:"client_website"`
-	ClientX         *string  `json:"client_x"`
-	IsFeatured      bool     `json:"is_featured"`
-	IsPublished     bool     `json:"is_published"`
-	SortOrder       int      `json:"sort_order"`
+	Images          []string       `json:"images"`
+	Year            *string        `json:"year"`
+	Client          *string        `json:"client"`
+	Role            *string        `json:"role"`
+	GithubURL       *string        `json:"github_url"`
+	ClientInstagram *string        `json:"client_instagram"`
+	ClientWebsite   *string        `json:"client_website"`
+	ClientX         *string        `json:"client_x"`
+	ImageCaptions   []ImageCaption `json:"image_captions"`
+	IsFeatured      bool           `json:"is_featured"`
+	IsPublished     bool           `json:"is_published"`
+	SortOrder       int            `json:"sort_order"`
 }
 
 // Admin: get all projects (including unpublished)
@@ -36,7 +37,7 @@ func AdminGetProjects(w http.ResponseWriter, r *http.Request) {
 		`SELECT id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
 		year, client, role, github_url, client_instagram, client_website, client_x,
-		is_featured, is_published, sort_order
+		image_captions, is_featured, is_published, sort_order
 		FROM projects ORDER BY sort_order`,
 	)
 	if err != nil {
@@ -48,17 +49,23 @@ func AdminGetProjects(w http.ResponseWriter, r *http.Request) {
 	projects := []Project{}
 	for rows.Next() {
 		var p Project
+		var captionsJSON []byte
 		err := rows.Scan(
 			&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
 			&p.Description, &p.LongDescription, &p.Category,
 			pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
 			&p.Year, &p.Client, &p.Role, &p.GithubURL,
 			&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+			&captionsJSON,
 			&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 		)
 		if err != nil {
 			http.Error(w, "Failed to scan project", http.StatusInternalServerError)
 			return
+		}
+		json.Unmarshal(captionsJSON, &p.ImageCaptions)
+		if p.ImageCaptions == nil {
+			p.ImageCaptions = []ImageCaption{}
 		}
 		projects = append(projects, p)
 	}
@@ -80,20 +87,27 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	captions := input.ImageCaptions
+	if captions == nil {
+		captions = []ImageCaption{}
+	}
+	captionsJSON, _ := json.Marshal(captions)
+
 	var p Project
+	var retCaptionsJSON []byte
 	err := database.DB.QueryRow(
 		`INSERT INTO projects (title, slug, description, long_description,
 		category, tags, thumbnail_url, images, year, client, role, github_url,
-		client_instagram, client_website, client_x, is_featured, is_published, sort_order)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+		client_instagram, client_website, client_x, image_captions, is_featured, is_published, sort_order)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
 		RETURNING id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
 		year, client, role, github_url, client_instagram, client_website, client_x,
-		is_featured, is_published, sort_order`,
+		image_captions, is_featured, is_published, sort_order`,
 		input.Title, input.Slug, input.Description, input.LongDescription,
 		input.Category, pq.Array(input.Tags), input.ThumbnailURL,
 		pq.Array(input.Images), input.Year, input.Client, input.Role, input.GithubURL,
-		input.ClientInstagram, input.ClientWebsite, input.ClientX,
+		input.ClientInstagram, input.ClientWebsite, input.ClientX, string(captionsJSON),
 		input.IsFeatured, input.IsPublished, input.SortOrder,
 	).Scan(
 		&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
@@ -101,11 +115,16 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
 		&p.Year, &p.Client, &p.Role, &p.GithubURL,
 		&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+		&retCaptionsJSON,
 		&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 	)
 	if err != nil {
 		http.Error(w, "Failed to create project", http.StatusInternalServerError)
 		return
+	}
+	json.Unmarshal(retCaptionsJSON, &p.ImageCaptions)
+	if p.ImageCaptions == nil {
+		p.ImageCaptions = []ImageCaption{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -123,22 +142,29 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	upCaptions := input.ImageCaptions
+	if upCaptions == nil {
+		upCaptions = []ImageCaption{}
+	}
+	upCaptionsJSON, _ := json.Marshal(upCaptions)
+
 	var p Project
+	var retUpCaptionsJSON []byte
 	err := database.DB.QueryRow(
 		`UPDATE projects SET title=$1, slug=$2, description=$3,
 		long_description=$4, category=$5, tags=$6, thumbnail_url=$7,
 		images=$8, year=$9, client=$10, role=$11, github_url=$12,
 		client_instagram=$13, client_website=$14, client_x=$15,
-		is_featured=$16, is_published=$17, sort_order=$18
-		WHERE id=$19
+		image_captions=$16, is_featured=$17, is_published=$18, sort_order=$19
+		WHERE id=$20
 		RETURNING id, created_at, updated_at, title, slug, description,
 		long_description, category, tags, thumbnail_url, images,
 		year, client, role, github_url, client_instagram, client_website, client_x,
-		is_featured, is_published, sort_order`,
+		image_captions, is_featured, is_published, sort_order`,
 		input.Title, input.Slug, input.Description, input.LongDescription,
 		input.Category, pq.Array(input.Tags), input.ThumbnailURL,
 		pq.Array(input.Images), input.Year, input.Client, input.Role, input.GithubURL,
-		input.ClientInstagram, input.ClientWebsite, input.ClientX,
+		input.ClientInstagram, input.ClientWebsite, input.ClientX, string(upCaptionsJSON),
 		input.IsFeatured, input.IsPublished, input.SortOrder, id,
 	).Scan(
 		&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
@@ -146,11 +172,16 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 		pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
 		&p.Year, &p.Client, &p.Role, &p.GithubURL,
 		&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
+		&retUpCaptionsJSON,
 		&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 	)
 	if err != nil {
 		http.Error(w, "Failed to update project", http.StatusInternalServerError)
 		return
+	}
+	json.Unmarshal(retUpCaptionsJSON, &p.ImageCaptions)
+	if p.ImageCaptions == nil {
+		p.ImageCaptions = []ImageCaption{}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

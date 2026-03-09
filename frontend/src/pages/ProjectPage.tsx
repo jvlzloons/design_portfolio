@@ -12,6 +12,7 @@ interface Project {
   tags: string[];
   thumbnail_url: string | null;
   images: string[];
+  image_captions: { title: string; subtitle: string }[];
   year: string | null;
   client: string | null;
   role: string | null;
@@ -268,17 +269,36 @@ export default function ProjectPage() {
 
         {/* Gallery */}
         {project.images && project.images.length > 0 && (
-          <div className="space-y-3">
-            {project.images.map((src, i) => (
-              <div key={i} className="w-full overflow-hidden rounded-sm">
-                <img
-                  src={src}
-                  alt={`${project.title} — image ${i + 1}`}
-                  className="w-full h-auto block"
-                  style={{ display: "block" }}
-                />
-              </div>
-            ))}
+          <div className="space-y-10">
+            {project.images.map((src, i) => {
+              const caption = project.image_captions?.[i];
+              return (
+                <div key={i}>
+                  <div className="w-full overflow-hidden rounded-sm">
+                    <img
+                      src={src}
+                      alt={`${project.title} — image ${i + 1}`}
+                      className="w-full h-auto block"
+                      style={{ display: "block" }}
+                    />
+                  </div>
+                  {(caption?.title || caption?.subtitle) && (
+                    <div className="mt-3" style={{ maxWidth: "65ch" }}>
+                      {caption.title && (
+                        <p className="font-semibold" style={{ color: "#1a1a1a", fontSize: "1rem" }}>
+                          {caption.title}
+                        </p>
+                      )}
+                      {caption.subtitle && (
+                        <p className="mt-1" style={{ color: "#6a6a6a", fontSize: "0.9rem", lineHeight: "1.5" }}>
+                          {caption.subtitle}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </main>

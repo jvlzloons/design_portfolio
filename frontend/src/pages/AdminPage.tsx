@@ -13,6 +13,7 @@ interface Project {
   tags: string[];
   thumbnail_url: string | null;
   images: string[];
+  image_captions: { title: string; subtitle: string }[];
   year: string | null;
   client: string | null;
   role: string | null;
@@ -264,6 +265,7 @@ export default function AdminPage() {
                 client_x: editingProject.client_x ?? "",
                 thumbnail_url: editingProject.thumbnail_url ?? "",
                 images: editingProject.images ?? [],
+                image_captions: editingProject.image_captions ?? [],
                 is_featured: editingProject.is_featured,
                 is_published: editingProject.is_published,
               }}
