@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
 
+function isVideo(src: string): boolean {
+  if (src.startsWith("data:video/")) return true;
+  const ext = src.split("?")[0].split(".").pop()?.toLowerCase();
+  return ["mp4", "mov", "webm", "avi", "mkv"].includes(ext ?? "");
+}
+
 interface ImageCaption {
   title: string;
   subtitle: string;
@@ -252,8 +258,12 @@ export default function ProjectForm({
                       title="Move down"
                     >▼</button>
                   </div>
-                  <div className="w-24 h-16 flex-shrink-0 rounded overflow-hidden border border-gray-600">
-                    <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                  <div className="w-24 h-16 flex-shrink-0 rounded overflow-hidden border border-gray-600 bg-gray-900">
+                    {isVideo(src) ? (
+                      <video src={src} className="w-full h-full object-cover" muted playsInline />
+                    ) : (
+                      <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
+                    )}
                   </div>
                   <div className="flex-1 space-y-1.5">
                     <input
@@ -284,10 +294,10 @@ export default function ProjectForm({
           )}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <input ref={galleryInputRef} type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" />
+              <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" />
               <label htmlFor="gallery-upload" className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
                 <span>+</span>
-                <span>Upload images</span>
+                <span>Upload images / videos</span>
               </label>
               <span className="text-xs text-gray-500">or paste a URL:</span>
             </div>

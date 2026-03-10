@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
+
+function isVideo(src: string): boolean {
+  if (src.startsWith("data:video/")) return true;
+  const ext = src.split("?")[0].split(".").pop()?.toLowerCase();
+  return ["mp4", "mov", "webm", "avi", "mkv"].includes(ext ?? "");
+}
 import { useParams } from "react-router-dom";
 import { fetchAPI } from "../lib/api";
 
@@ -302,12 +308,23 @@ export default function ProjectPage() {
                     className="w-full overflow-hidden rounded-sm cursor-zoom-in"
                     onClick={() => setLightboxIndex(i)}
                   >
-                    <img
-                      src={src}
-                      alt={`${project.title} — image ${i + 1}`}
-                      className="w-full h-auto block"
-                      style={{ display: "block" }}
-                    />
+                    {isVideo(src) ? (
+                      <video
+                        src={src}
+                        className="w-full h-auto block"
+                        style={{ display: "block" }}
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : (
+                      <img
+                        src={src}
+                        alt={`${project.title} — image ${i + 1}`}
+                        className="w-full h-auto block"
+                        style={{ display: "block" }}
+                      />
+                    )}
                   </div>
                   {(caption?.title || caption?.subtitle) && (
                     <div className="mt-3" style={{ maxWidth: "65ch" }}>
@@ -362,17 +379,28 @@ export default function ProjectPage() {
               </button>
             )}
 
-            {/* Image + caption */}
+            {/* Media + caption */}
             <div
               className="flex flex-col items-center px-16 max-h-screen"
               style={{ maxWidth: "min(90vw, 1100px)" }}
               onClick={(e) => e.stopPropagation()}
             >
-              <img
-                src={project.images[lightboxIndex]}
-                alt={`${project.title} — image ${lightboxIndex + 1}`}
-                style={{ maxHeight: "75vh", maxWidth: "100%", objectFit: "contain", display: "block" }}
-              />
+              {isVideo(project.images[lightboxIndex]) ? (
+                <video
+                  key={lightboxIndex}
+                  src={project.images[lightboxIndex]}
+                  controls
+                  autoPlay
+                  playsInline
+                  style={{ maxHeight: "75vh", maxWidth: "100%", display: "block" }}
+                />
+              ) : (
+                <img
+                  src={project.images[lightboxIndex]}
+                  alt={`${project.title} — image ${lightboxIndex + 1}`}
+                  style={{ maxHeight: "75vh", maxWidth: "100%", objectFit: "contain", display: "block" }}
+                />
+              )}
               {(caption?.title || caption?.subtitle) && (
                 <div className="mt-4 text-center" style={{ maxWidth: "60ch" }}>
                   {caption?.title && (
