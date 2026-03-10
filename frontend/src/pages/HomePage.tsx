@@ -99,7 +99,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f0ebe0", fontFamily: "'Space Grotesk', sans-serif"}}>
+    <div className="min-h-screen" style={{ backgroundColor: "#FBF7F5", fontFamily: "'Space Grotesk', sans-serif"}}>
       {/* Header */}
       <header style={{ borderBottom: "1px solid #d4cfc6", padding: "2rem"}} className="flex items-center px-8 py-4 relative">
         {/* Left nav */}
@@ -149,52 +149,115 @@ export default function HomePage() {
         {/* Hamburger button - mobile only */}
         <button
           className="md:hidden ml-auto p-1"
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Toggle menu"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Open menu"
           style={{ color: "#4a4a4a" }}
         >
-          {menuOpen ? (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          ) : (
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
-          )}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
         </button>
       </header>
 
-      {/* Mobile menu */}
-      {menuOpen && (
-        <div className="md:hidden" style={{ borderBottom: "1px solid #d4cfc6", backgroundColor: "#f0ebe0" }}>
-          <nav className="flex flex-col px-8 py-4 gap-4 text-sm font-medium" style={{ color: "#4a4a4a" }}>
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item}
-                onClick={() => { setActiveSection(item); setMenuOpen(false); }}
-                className="text-left bg-transparent border-0 cursor-pointer transition-colors hover:text-black"
-                style={{
-                  color: activeSection === item ? "#1a1a1a" : "#4a4a4a",
-                  fontFamily: "inherit",
-                  fontSize: "inherit",
-                  fontWeight: activeSection === item ? 600 : undefined,
-                }}
-              >
-                {item}
-              </button>
-            ))}
-          </nav>
-          <div className="flex items-center gap-4 px-8 pb-4" style={{ color: "#4a4a4a" }}>
-            <a href="https://x.com/jvlzloona" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="X / Twitter"><XIcon /></a>
-            <a href="https://www.instagram.com/jvloons/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="Instagram"><InstagramIcon /></a>
-            <a href="https://www.linkedin.com/in/jvlz/" target="_blank" rel="noopener noreferrer" className="hover:text-black transition-colors" aria-label="LinkedIn"><LinkedInIcon /></a>
-          </div>
+      {/* Drawer overlay */}
+      <div
+        className="md:hidden fixed inset-0 z-40"
+        style={{
+          backgroundColor: "rgba(0,0,0,0.35)",
+          opacity: menuOpen ? 1 : 0,
+          pointerEvents: menuOpen ? "auto" : "none",
+          transition: "opacity 0.3s ease",
+        }}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      {/* Side drawer */}
+      <div
+        className="md:hidden fixed top-0 right-0 h-full z-50 flex flex-col"
+        style={{
+          width: "272px",
+          backgroundColor: "#FBF7F5",
+          borderLeft: "1px solid #d4cfc6",
+          transform: menuOpen ? "translateX(0)" : "translateX(100%)",
+          transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      >
+        {/* Drawer header */}
+        <div className="flex items-center justify-between px-6 py-5" style={{ borderBottom: "1px solid #d4cfc6" }}>
+          <img
+            src="https://res.cloudinary.com/dgdtee5ls/image/upload/v1772827247/Logo_copy_o1icuq.png"
+            alt="JV"
+            style={{ height: "1.75rem", width: "auto" }}
+          />
+          <button
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+            style={{ color: "#4a4a4a" }}
+            className="hover:text-black transition-colors p-1"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
-      )}
+
+        {/* Nav items */}
+        <nav className="flex flex-col px-6 pt-8 gap-1 text-sm font-medium">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item}
+              onClick={() => { setActiveSection(item); setMenuOpen(false); }}
+              className="text-left bg-transparent border-0 cursor-pointer transition-colors hover:text-black py-2"
+              style={{
+                color: activeSection === item ? "#1a1a1a" : "#6a6a6a",
+                fontFamily: "inherit",
+                fontSize: "1rem",
+                fontWeight: activeSection === item ? 600 : 400,
+                borderBottom: activeSection === item ? "1.5px solid #1a1a1a" : "1.5px solid transparent",
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </nav>
+
+        {/* Social icons - stacked */}
+        <div className="flex flex-col gap-5 px-6 mt-auto pb-10 pt-8" style={{ borderTop: "1px solid #d4cfc6", marginTop: "auto" }}>
+          <a
+            href="https://x.com/jvlzloona"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 hover:text-black transition-colors"
+            style={{ color: "#4a4a4a", textDecoration: "none" }}
+          >
+            <XIcon />
+            <span className="text-sm font-medium">X</span>
+          </a>
+          <a
+            href="https://www.instagram.com/jvloons/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 hover:text-black transition-colors"
+            style={{ color: "#4a4a4a", textDecoration: "none" }}
+          >
+            <InstagramIcon />
+            <span className="text-sm font-medium">Instagram</span>
+          </a>
+          <a
+            href="https://www.linkedin.com/in/jvlz/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 hover:text-black transition-colors"
+            style={{ color: "#4a4a4a", textDecoration: "none" }}
+          >
+            <LinkedInIcon />
+            <span className="text-sm font-medium">LinkedIn</span>
+          </a>
+        </div>
+      </div>
 
       {/* Main content */}
       <main>
