@@ -30,13 +30,14 @@ interface ProjectFormData {
   image_captions: ImageCaption[];
   is_featured: boolean;
   is_published: boolean;
+  sort_order: number;
 }
 
 interface ProjectFormProps {
   categories: { id: string; name: string; slug: string }[];
   onSubmit: (data: Record<string, unknown>) => Promise<void>;
   onCancel: () => void;
-  initialValues?: Partial<ProjectFormData & { image_captions: ImageCaption[] }>;
+  initialValues?: Partial<ProjectFormData>;
   mode?: "create" | "edit";
 }
 
@@ -66,6 +67,7 @@ export default function ProjectForm({
     image_captions: initialValues.image_captions ?? [],
     is_featured: initialValues.is_featured ?? false,
     is_published: initialValues.is_published ?? false,
+    sort_order: initialValues.sort_order ?? 0,
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -180,7 +182,7 @@ export default function ProjectForm({
         client_x: form.client_x || null,
         is_featured: form.is_featured,
         is_published: form.is_published,
-        sort_order: 0,
+        sort_order: form.sort_order,
       });
     } catch {
       setError(mode === "edit" ? "Failed to update project. Try again." : "Failed to create project. Try again.");

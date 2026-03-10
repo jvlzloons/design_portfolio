@@ -97,14 +97,24 @@ export default function AdminPage() {
   function handleMove(id: string, direction: "up" | "down") {
     const isICT = (p: Project) => p.category.toLowerCase() === "ict";
     const project = projects.find((p) => p.id === id)!;
-    const group = projects.filter((p) => isICT(p) === isICT(project));
-    const index = group.findIndex((p) => p.id === id);
-    const swapIndex = direction === "up" ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= group.length) return;
-    const newGroup = [...group];
-    [newGroup[index], newGroup[swapIndex]] = [newGroup[swapIndex], newGroup[index]];
-    const reorderedGroup = newGroup.map((p, i) => ({ ...p, sort_order: i }));
-    setProjects((prev) => prev.map((p) => reorderedGroup.find((rp) => rp.id === p.id) ?? p));
+    // Get the indices in the full projects array that belong to this group
+    const groupIndices = projects.reduce<number[]>((acc, p, i) => {
+      if (isICT(p) === isICT(project)) acc.push(i);
+      return acc;
+    }, []);
+    const posInGroup = groupIndices.findIndex((gi) => projects[gi].id === id);
+    const swapPosInGroup = direction === "up" ? posInGroup - 1 : posInGroup + 1;
+    if (swapPosInGroup < 0 || swapPosInGroup >= groupIndices.length) return;
+    // Swap actual positions in the array
+    const newProjects = [...projects];
+    const aIdx = groupIndices[posInGroup];
+    const bIdx = groupIndices[swapPosInGroup];
+    [newProjects[aIdx], newProjects[bIdx]] = [newProjects[bIdx], newProjects[aIdx]];
+    // Re-index sort_order within the group
+    groupIndices.forEach((gi, i) => {
+      newProjects[gi] = { ...newProjects[gi], sort_order: i };
+    });
+    setProjects(newProjects);
     setOrderDirty(true);
   }
 
@@ -273,6 +283,7 @@ export default function AdminPage() {
                 image_captions: editingProject.image_captions ?? [],
                 is_featured: editingProject.is_featured,
                 is_published: editingProject.is_published,
+                sort_order: editingProject.sort_order,
               }}
             />
           </div>
