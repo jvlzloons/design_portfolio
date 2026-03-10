@@ -94,12 +94,17 @@ export default function AdminPage() {
     await loadData();
   }
 
-  function handleMove(index: number, direction: "up" | "down") {
-    const newProjects = [...projects];
+  function handleMove(id: string, direction: "up" | "down") {
+    const isICT = (p: Project) => p.category.toLowerCase() === "ict";
+    const project = projects.find((p) => p.id === id)!;
+    const group = projects.filter((p) => isICT(p) === isICT(project));
+    const index = group.findIndex((p) => p.id === id);
     const swapIndex = direction === "up" ? index - 1 : index + 1;
-    [newProjects[index], newProjects[swapIndex]] = [newProjects[swapIndex], newProjects[index]];
-    const reordered = newProjects.map((p, i) => ({ ...p, sort_order: i }));
-    setProjects(reordered);
+    if (swapIndex < 0 || swapIndex >= group.length) return;
+    const newGroup = [...group];
+    [newGroup[index], newGroup[swapIndex]] = [newGroup[swapIndex], newGroup[index]];
+    const reorderedGroup = newGroup.map((p, i) => ({ ...p, sort_order: i }));
+    setProjects((prev) => prev.map((p) => reorderedGroup.find((rp) => rp.id === p.id) ?? p));
     setOrderDirty(true);
   }
 
@@ -288,109 +293,96 @@ export default function AdminPage() {
         {/* Project list */}
         {loading ? (
           <p className="text-gray-400">Loading...</p>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">
-                Projects ({projects.length})
-              </h2>
-              {(orderDirty || orderError) && (
-                <div className="flex items-center gap-3">
-                  {orderError && (
-                    <span className="text-xs text-red-400">{orderError}</span>
-                  )}
-                  {orderDirty && (
-                    <button
-                      onClick={handleSaveOrder}
-                      disabled={savingOrder}
-                      className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium hover:bg-green-500 disabled:opacity-50 transition-colors"
+        ) : (() => {
+          const designProjects = projects.filter((p) => p.category.toLowerCase() !== "ict");
+          const ictProjects = projects.filter((p) => p.category.toLowerCase() === "ict");
+
+          const renderGroup = (group: Project[], label: string) => (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-semibold">{label} <span className="text-gray-500 text-base font-normal">({group.length})</span></h2>
+                {(orderDirty || orderError) && (
+                  <div className="flex items-center gap-3">
+                    {orderError && <span className="text-xs text-red-400">{orderError}</span>}
+                    {orderDirty && (
+                      <button
+                        onClick={handleSaveOrder}
+                        disabled={savingOrder}
+                        className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium hover:bg-green-500 disabled:opacity-50 transition-colors"
+                      >
+                        {savingOrder ? "Saving..." : "Save Order"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+              {group.length === 0 ? (
+                <p className="text-sm text-gray-500 rounded-lg border border-gray-800 p-4">No {label} projects yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {group.map((project, index) => (
+                    <div
+                      key={project.id}
+                      className="flex items-center gap-4 rounded-lg border border-gray-800 p-4"
                     >
-                      {savingOrder ? "Saving..." : "Save Order"}
-                    </button>
-                  )}
+                      <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+                        {project.thumbnail_url ? (
+                          <img src={project.thumbnail_url} alt={project.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">No img</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">{project.title}</h3>
+                        <p className="text-sm text-gray-400">{project.category}</p>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            onClick={() => handleMove(project.id, "up")}
+                            disabled={index === 0}
+                            className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
+                            title="Move up"
+                          >▲</button>
+                          <button
+                            onClick={() => handleMove(project.id, "down")}
+                            disabled={index === group.length - 1}
+                            className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
+                            title="Move down"
+                          >▼</button>
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded ${project.is_published ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300"}`}>
+                          {project.is_published ? "Published" : "Draft"}
+                        </span>
+                        <button
+                          onClick={() => { setShowCreateForm(false); setEditingProject(project); }}
+                          className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                        >Edit</button>
+                        <button
+                          onClick={() => handleDelete(project.id)}
+                          className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                        >Delete</button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-            {projects.length === 0 ? (
-              <p className="text-gray-400">No projects yet. Create your first one!</p>
-            ) : (
-              projects.map((project, index) => (
-                <div
-                  key={project.id}
-                  className="flex items-center gap-4 rounded-lg border border-gray-800 p-4"
-                >
-                  {/* Thumbnail */}
-                  <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-800">
-                    {project.thumbnail_url ? (
-                      <img
-                        src={project.thumbnail_url}
-                        alt={project.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">
-                        No img
-                      </div>
-                    )}
-                  </div>
+          );
 
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium truncate">{project.title}</h3>
-                    <p className="text-sm text-gray-400">{project.category}</p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {/* Sort order buttons */}
-                    <div className="flex flex-col gap-0.5">
-                      <button
-                        onClick={() => handleMove(index, "up")}
-                        disabled={index === 0}
-                        className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
-                        title="Move up"
-                      >
-                        ▲
-                      </button>
-                      <button
-                        onClick={() => handleMove(index, "down")}
-                        disabled={index === projects.length - 1}
-                        className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
-                        title="Move down"
-                      >
-                        ▼
-                      </button>
-                    </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        project.is_published
-                          ? "bg-green-900 text-green-300"
-                          : "bg-yellow-900 text-yellow-300"
-                      }`}
-                    >
-                      {project.is_published ? "Published" : "Draft"}
-                    </span>
-                    <button
-                      onClick={() => {
-                        setShowCreateForm(false);
-                        setEditingProject(project);
-                      }}
-                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(project.id)}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+          return (
+            <div>
+              {projects.length === 0 ? (
+                <p className="text-gray-400">No projects yet. Create your first one!</p>
+              ) : (
+                <>
+                  {renderGroup(designProjects, "Design")}
+                  {renderGroup(ictProjects, "ICT")}
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
