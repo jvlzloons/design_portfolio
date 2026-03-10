@@ -95,6 +95,16 @@ export default function HomePage() {
   const [bannerVisible, setBannerVisible] = useState(() => {
     return localStorage.getItem(BANNER_KEY) !== "1";
   });
+  const [bannerDismissing, setBannerDismissing] = useState(false);
+
+  function dismissBanner() {
+    setBannerDismissing(true);
+    setTimeout(() => {
+      localStorage.setItem(BANNER_KEY, "1");
+      setBannerVisible(false);
+      setBannerDismissing(false);
+    }, 320);
+  }
 
   useEffect(() => {
     fetchAPI("/projects")
@@ -265,7 +275,7 @@ export default function HomePage() {
       </div>
 
       {/* Main content */}
-      <main>
+      <main key={activeSection} style={{ animation: "fadeIn 0.25s ease both" }}>
         {activeSection === "Design" && (() => {
           const filtered = projects.filter((p) => p.category.toLowerCase() !== "ict");
           return loading ? (
@@ -274,12 +284,12 @@ export default function HomePage() {
             <p className="p-8 text-sm" style={{ color: "#888" }}>No projects yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
-              {filtered.map((project) => (
+              {filtered.map((project, i) => (
                 <a
                   key={project.id}
                   href={`/projects/${project.slug}`}
                   className="relative block overflow-hidden group"
-                  style={{ aspectRatio: "3/2" }}
+                  style={{ aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }}
                 >
                   {project.thumbnail_url ? (
                     <img
@@ -315,12 +325,12 @@ export default function HomePage() {
             <p className="p-8 text-sm" style={{ color: "#888" }}>No ICT projects yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
-              {filtered.map((project) => (
+              {filtered.map((project, i) => (
                 <a
                   key={project.id}
                   href={`/projects/${project.slug}`}
                   className="relative block overflow-hidden group"
-                  style={{ aspectRatio: "3/2" }}
+                  style={{ aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }}
                 >
                   {project.thumbnail_url ? (
                     <img
@@ -454,7 +464,9 @@ export default function HomePage() {
         <div
           className="fixed bottom-6 left-1/2 z-40 flex items-center gap-4 px-5 py-4 rounded-2xl shadow-2xl"
           style={{
-            transform: "translateX(-50%)",
+            animation: bannerDismissing
+              ? "bannerOut 0.32s cubic-bezier(0.4,0,1,1) forwards"
+              : "bannerIn 0.5s cubic-bezier(0.16,1,0.3,1) forwards",
             backgroundColor: "#1a1a1a",
             color: "#f5f0ea",
             maxWidth: "min(92vw, 460px)",
@@ -480,10 +492,7 @@ export default function HomePage() {
           </div>
           {/* Dismiss */}
           <button
-            onClick={() => {
-              localStorage.setItem(BANNER_KEY, "1");
-              setBannerVisible(false);
-            }}
+            onClick={dismissBanner}
             className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
             style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(245,240,234,0.7)" }}
             aria-label="Dismiss"

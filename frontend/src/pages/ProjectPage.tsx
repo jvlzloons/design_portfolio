@@ -421,7 +421,7 @@ export default function ProjectPage() {
         return (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ backgroundColor: "rgba(0,0,0,0.92)" }}
+            style={{ backgroundColor: "rgba(0,0,0,0.92)", animation: "fadeIn 0.2s ease both" }}
             onClick={closeLightbox}
           >
             {/* Close */}
