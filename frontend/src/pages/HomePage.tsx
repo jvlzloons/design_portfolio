@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+
+const BANNER_KEY = "projects_uploading_dismissed";
 import { fetchAPI } from "../lib/api";
 
 interface Project {
@@ -90,6 +92,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<Section>("Design");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bannerVisible, setBannerVisible] = useState(() => {
+    return localStorage.getItem(BANNER_KEY) !== "1";
+  });
 
   useEffect(() => {
     fetchAPI("/projects")
@@ -443,6 +448,50 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
+      {/* Uploading banner */}
+      {bannerVisible && (
+        <div
+          className="fixed bottom-6 left-1/2 z-40 flex items-center gap-4 px-5 py-4 rounded-2xl shadow-2xl"
+          style={{
+            transform: "translateX(-50%)",
+            backgroundColor: "#1a1a1a",
+            color: "#f5f0ea",
+            maxWidth: "min(92vw, 460px)",
+            width: "100%",
+            fontFamily: "'Space Grotesk', sans-serif",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          {/* Caution icon */}
+          <div className="flex-shrink-0" style={{ color: "#f0c040" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L1 21h22L12 2zm0 3.5L20.5 19H3.5L12 5.5zM11 10v4h2v-4h-2zm0 6v2h2v-2h-2z"/>
+            </svg>
+          </div>
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold leading-snug" style={{ color: "#f5f0ea" }}>
+              More projects are being uploaded
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(245,240,234,0.5)" }}>
+              Check back soon for new work.
+            </p>
+          </div>
+          {/* Dismiss */}
+          <button
+            onClick={() => {
+              localStorage.setItem(BANNER_KEY, "1");
+              setBannerVisible(false);
+            }}
+            className="flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+            style={{ backgroundColor: "rgba(255,255,255,0.1)", color: "rgba(245,240,234,0.7)" }}
+            aria-label="Dismiss"
+          >
+            Got it
+          </button>
+        </div>
+      )}
     </div>
   );
 }
