@@ -205,7 +205,7 @@ export default function HomePage() {
           ) : filtered.length === 0 ? (
             <p className="p-8 text-sm" style={{ color: "#888" }}>No projects yet.</p>
           ) : (
-            <div className="grid grid-cols-3" style={{ gap: "2px" }}>
+            <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
               {filtered.map((project) => (
                 <a
                   key={project.id}
@@ -246,7 +246,7 @@ export default function HomePage() {
           ) : filtered.length === 0 ? (
             <p className="p-8 text-sm" style={{ color: "#888" }}>No ICT projects yet.</p>
           ) : (
-            <div className="grid grid-cols-3" style={{ gap: "2px" }}>
+            <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
               {filtered.map((project) => (
                 <a
                   key={project.id}
