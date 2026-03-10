@@ -13,7 +13,7 @@ interface Project {
   tags: string[];
   thumbnail_url: string | null;
   images: string[];
-  image_captions: { title: string; subtitle: string }[];
+  image_captions: { title: string; subtitle: string; poster: string }[];
   year: string | null;
   client: string | null;
   role: string | null;
