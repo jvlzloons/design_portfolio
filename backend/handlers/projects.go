@@ -12,6 +12,7 @@ import (
 type ImageCaption struct {
 	Title    string `json:"title"`
 	Subtitle string `json:"subtitle"`
+	Poster   string `json:"poster"`
 }
 
 type Project struct {

@@ -9,6 +9,7 @@ function isVideo(src: string): boolean {
 interface ImageCaption {
   title: string;
   subtitle: string;
+  poster: string;
 }
 
 interface ProjectFormData {
@@ -116,7 +117,7 @@ export default function ProjectForm({
         setForm((prev) => ({
           ...prev,
           images: [...prev.images, dataUrl],
-          image_captions: [...prev.image_captions, { title: "", subtitle: "" }],
+          image_captions: [...prev.image_captions, { title: "", subtitle: "", poster: "" }],
         }));
       };
       reader.readAsDataURL(file);
@@ -146,7 +147,7 @@ export default function ProjectForm({
   function updateCaption(index: number, field: keyof ImageCaption, value: string) {
     setForm((prev) => {
       const captions = [...prev.image_captions];
-      while (captions.length <= index) captions.push({ title: "", subtitle: "" });
+      while (captions.length <= index) captions.push({ title: "", subtitle: "", poster: "" });
       captions[index] = { ...captions[index], [field]: value };
       return { ...prev, image_captions: captions };
     });
@@ -282,6 +283,15 @@ export default function ProjectForm({
                       placeholder="Caption subtitle (optional)"
                       className={inputClass}
                     />
+                    {isVideo(src) && (
+                      <input
+                        type="text"
+                        value={form.image_captions[i]?.poster ?? ""}
+                        onChange={(e) => updateCaption(i, "poster", e.target.value)}
+                        placeholder="Video poster/thumbnail URL (optional)"
+                        className={inputClass}
+                      />
+                    )}
                   </div>
                   <button
                     type="button"
@@ -315,7 +325,7 @@ export default function ProjectForm({
                       setForm((prev) => ({
                         ...prev,
                         images: [...prev.images, galleryUrlInput.trim()],
-                        image_captions: [...prev.image_captions, { title: "", subtitle: "" }],
+                        image_captions: [...prev.image_captions, { title: "", subtitle: "", poster: "" }],
                       }));
                       setGalleryUrlInput("");
                     }
@@ -331,7 +341,7 @@ export default function ProjectForm({
                     setForm((prev) => ({
                       ...prev,
                       images: [...prev.images, galleryUrlInput.trim()],
-                      image_captions: [...prev.image_captions, { title: "", subtitle: "" }],
+                      image_captions: [...prev.image_captions, { title: "", subtitle: "", poster: "" }],
                     }));
                     setGalleryUrlInput("");
                   }

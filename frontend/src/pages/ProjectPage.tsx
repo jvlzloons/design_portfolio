@@ -18,7 +18,7 @@ interface Project {
   tags: string[];
   thumbnail_url: string | null;
   images: string[];
-  image_captions: { title: string; subtitle: string }[];
+  image_captions: { title: string; subtitle: string; poster: string }[];
   year: string | null;
   client: string | null;
   role: string | null;
@@ -356,18 +356,35 @@ export default function ProjectPage() {
               return (
                 <div key={i}>
                   <div
-                    className="w-full overflow-hidden rounded-sm cursor-zoom-in"
+                    className="w-full overflow-hidden rounded-sm cursor-zoom-in relative"
                     onClick={() => setLightboxIndex(i)}
                   >
                     {isVideo(src) ? (
-                      <video
-                        src={src}
-                        className="w-full h-auto block"
-                        style={{ display: "block" }}
-                        muted
-                        playsInline
-                        preload="metadata"
-                      />
+                      <>
+                        <video
+                          src={src}
+                          poster={caption?.poster || undefined}
+                          className="w-full h-auto block"
+                          style={{ display: "block" }}
+                          muted
+                          playsInline
+                          preload="metadata"
+                        />
+                        {/* Play button overlay */}
+                        <div
+                          className="absolute inset-0 flex items-center justify-center"
+                          style={{ background: "rgba(0,0,0,0.18)" }}
+                        >
+                          <div
+                            className="flex items-center justify-center rounded-full"
+                            style={{ width: 64, height: 64, background: "rgba(255,255,255,0.92)" }}
+                          >
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="#1a1a1a">
+                              <polygon points="6,3 21,12 6,21" />
+                            </svg>
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <img
                         src={src}
@@ -440,6 +457,7 @@ export default function ProjectPage() {
                 <video
                   key={lightboxIndex}
                   src={project.images[lightboxIndex]}
+                  poster={project.image_captions?.[lightboxIndex]?.poster || undefined}
                   controls
                   autoPlay
                   playsInline
