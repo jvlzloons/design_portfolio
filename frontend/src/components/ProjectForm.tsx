@@ -124,6 +124,17 @@ export default function ProjectForm({
     }));
   }
 
+  function moveGalleryImage(index: number, direction: "up" | "down") {
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    setForm((prev) => {
+      const images = [...prev.images];
+      const captions = [...prev.image_captions];
+      [images[index], images[swapIndex]] = [images[swapIndex], images[index]];
+      [captions[index], captions[swapIndex]] = [captions[swapIndex], captions[index]];
+      return { ...prev, images, image_captions: captions };
+    });
+  }
+
   function updateCaption(index: number, field: keyof ImageCaption, value: string) {
     setForm((prev) => {
       const captions = [...prev.image_captions];
@@ -225,6 +236,22 @@ export default function ProjectForm({
             <div className="space-y-2">
               {form.images.map((src, i) => (
                 <div key={i} className="flex gap-3 items-start rounded-lg border border-gray-700 p-3">
+                  <div className="flex flex-col gap-0.5 flex-shrink-0 justify-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => moveGalleryImage(i, "up")}
+                      disabled={i === 0}
+                      className="text-gray-600 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors text-xs"
+                      title="Move up"
+                    >▲</button>
+                    <button
+                      type="button"
+                      onClick={() => moveGalleryImage(i, "down")}
+                      disabled={i === form.images.length - 1}
+                      className="text-gray-600 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors text-xs"
+                      title="Move down"
+                    >▼</button>
+                  </div>
                   <div className="w-24 h-16 flex-shrink-0 rounded overflow-hidden border border-gray-600">
                     <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
                   </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchAPI } from "../lib/api";
 
@@ -56,6 +56,7 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!slug) return;
@@ -64,6 +65,29 @@ export default function ProjectPage() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+
+  const lightboxPrev = useCallback(() => {
+    if (!project || lightboxIndex === null) return;
+    setLightboxIndex((i) => (i! > 0 ? i! - 1 : project.images.length - 1));
+  }, [project, lightboxIndex]);
+
+  const lightboxNext = useCallback(() => {
+    if (!project || lightboxIndex === null) return;
+    setLightboxIndex((i) => (i! < project.images.length - 1 ? i! + 1 : 0));
+  }, [project, lightboxIndex]);
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") lightboxPrev();
+      if (e.key === "ArrowRight") lightboxNext();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIndex, closeLightbox, lightboxPrev, lightboxNext]);
 
   const pageStyle = { backgroundColor: "#f0ebe0", fontFamily: "'Space Grotesk', sans-serif" };
 
@@ -274,7 +298,10 @@ export default function ProjectPage() {
               const caption = project.image_captions?.[i];
               return (
                 <div key={i}>
-                  <div className="w-full overflow-hidden rounded-sm">
+                  <div
+                    className="w-full overflow-hidden rounded-sm cursor-zoom-in"
+                    onClick={() => setLightboxIndex(i)}
+                  >
                     <img
                       src={src}
                       alt={`${project.title} — image ${i + 1}`}
@@ -302,6 +329,86 @@ export default function ProjectPage() {
           </div>
         )}
       </main>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && project.images[lightboxIndex] && (() => {
+        const caption = project.image_captions?.[lightboxIndex];
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(0,0,0,0.92)" }}
+            onClick={closeLightbox}
+          >
+            {/* Close */}
+            <button
+              onClick={closeLightbox}
+              className="absolute top-5 right-6 text-white/60 hover:text-white transition-colors text-3xl leading-none"
+              aria-label="Close"
+              style={{ fontFamily: "sans-serif" }}
+            >
+              ×
+            </button>
+
+            {/* Prev */}
+            {project.images.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors p-2"
+                aria-label="Previous image"
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+            )}
+
+            {/* Image + caption */}
+            <div
+              className="flex flex-col items-center px-16 max-h-screen"
+              style={{ maxWidth: "min(90vw, 1100px)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={project.images[lightboxIndex]}
+                alt={`${project.title} — image ${lightboxIndex + 1}`}
+                style={{ maxHeight: "75vh", maxWidth: "100%", objectFit: "contain", display: "block" }}
+              />
+              {(caption?.title || caption?.subtitle) && (
+                <div className="mt-4 text-center" style={{ maxWidth: "60ch" }}>
+                  {caption?.title && (
+                    <p className="font-semibold text-white" style={{ fontSize: "1rem" }}>
+                      {caption.title}
+                    </p>
+                  )}
+                  {caption?.subtitle && (
+                    <p className="mt-1" style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem", lineHeight: "1.5" }}>
+                      {caption.subtitle}
+                    </p>
+                  )}
+                </div>
+              )}
+              {project.images.length > 1 && (
+                <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", marginTop: "1rem" }}>
+                  {lightboxIndex + 1} / {project.images.length}
+                </p>
+              )}
+            </div>
+
+            {/* Next */}
+            {project.images.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors p-2"
+                aria-label="Next image"
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
