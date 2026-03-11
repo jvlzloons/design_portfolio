@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client'
 import { ClerkProvider } from '@clerk/clerk-react'
 import App from './App.tsx'
 import './index.css'
+import { getProjectsPromise } from './lib/api.ts'
+// Kick off backend warm-up at the earliest possible moment
+getProjectsPromise();
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 

@@ -23,6 +23,22 @@ export function cloudinaryOpt(url: string | null | undefined, width = 800): stri
   return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width}/`);
 }
 
+const CLOUDINARY_CLOUD = "dgdtee5ls";
+const CLOUDINARY_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
+
+export async function uploadToCloudinary(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/upload`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Cloudinary upload failed");
+  const data = await res.json();
+  return data.secure_url as string;
+}
+
 export async function fetchAPI(endpoint: string, options?: RequestInit) {
   const response = await fetch(`${API_URL}${endpoint}`, {
     headers: {

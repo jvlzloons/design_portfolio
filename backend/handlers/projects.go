@@ -40,13 +40,11 @@ type Project struct {
 	SortOrder       int            `json:"sort_order"`
 }
 
-// Public: get published projects
+// Public: get published projects (grid fields only — excludes images/captions to keep payload small)
 func GetProjects(w http.ResponseWriter, r *http.Request) {
 	rows, err := database.DB.Query(
 		`SELECT id, created_at, updated_at, title, slug, description,
-		long_description, category, tags, thumbnail_url, images,
-		year, client, role, github_url, client_instagram, client_website, client_x,
-		image_captions, is_featured, is_published, sort_order
+		category, tags, thumbnail_url, github_url, is_featured, is_published, sort_order
 		FROM projects WHERE is_published = true ORDER BY sort_order`,
 	)
 	if err != nil {
@@ -58,24 +56,18 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	projects := []Project{}
 	for rows.Next() {
 		var p Project
-		var captionsJSON []byte
 		err := rows.Scan(
 			&p.ID, &p.CreatedAt, &p.UpdatedAt, &p.Title, &p.Slug,
-			&p.Description, &p.LongDescription, &p.Category,
-			pq.Array(&p.Tags), &p.ThumbnailURL, pq.Array(&p.Images),
-			&p.Year, &p.Client, &p.Role, &p.GithubURL,
-			&p.ClientInstagram, &p.ClientWebsite, &p.ClientX,
-			&captionsJSON,
+			&p.Description, &p.Category,
+			pq.Array(&p.Tags), &p.ThumbnailURL, &p.GithubURL,
 			&p.IsFeatured, &p.IsPublished, &p.SortOrder,
 		)
 		if err != nil {
 			http.Error(w, "Failed to scan project", http.StatusInternalServerError)
 			return
 		}
-		json.Unmarshal(captionsJSON, &p.ImageCaptions)
-		if p.ImageCaptions == nil {
-			p.ImageCaptions = []ImageCaption{}
-		}
+		p.Images = []string{}
+		p.ImageCaptions = []ImageCaption{}
 		projects = append(projects, p)
 	}
 

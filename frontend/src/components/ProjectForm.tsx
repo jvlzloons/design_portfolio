@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
+import { uploadToCloudinary } from "../lib/api";
 
 function isVideo(src: string): boolean {
-  if (src.startsWith("data:video/")) return true;
   const ext = src.split("?")[0].split(".").pop()?.toLowerCase();
   return ["mp4", "mov", "webm", "avi", "mkv"].includes(ext ?? "");
 }
@@ -71,6 +71,8 @@ export default function ProjectForm({
     sort_order: initialValues.sort_order ?? 0,
   });
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [error, setError] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState<string>(initialValues.thumbnail_url ?? "");
   const [galleryUrlInput, setGalleryUrlInput] = useState("");
@@ -89,16 +91,21 @@ export default function ProjectForm({
     }
   }
 
-  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setForm((prev) => ({ ...prev, thumbnail_url: dataUrl }));
-      setThumbnailPreview(dataUrl);
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    setUploadError("");
+    try {
+      const url = await uploadToCloudinary(file);
+      setForm((prev) => ({ ...prev, thumbnail_url: url }));
+      setThumbnailPreview(url);
+    } catch {
+      setUploadError("Thumbnail upload failed. Try again.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   function handleClearImage() {
@@ -107,22 +114,24 @@ export default function ProjectForm({
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        setForm((prev) => ({
-          ...prev,
-          images: [...prev.images, dataUrl],
-          image_captions: [...prev.image_captions, { title: "", subtitle: "", poster: "" }],
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
-    if (galleryInputRef.current) galleryInputRef.current.value = "";
+    setUploading(true);
+    setUploadError("");
+    try {
+      const urls = await Promise.all(files.map((f) => uploadToCloudinary(f)));
+      setForm((prev) => ({
+        ...prev,
+        images: [...prev.images, ...urls],
+        image_captions: [...prev.image_captions, ...urls.map(() => ({ title: "", subtitle: "", poster: "" }))],
+      }));
+    } catch {
+      setUploadError("One or more uploads failed. Try again.");
+    } finally {
+      setUploading(false);
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
+    }
   }
 
   function removeGalleryImage(index: number) {
@@ -221,17 +230,18 @@ export default function ProjectForm({
             </div>
           )}
           <div className="flex items-center gap-3">
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="thumbnail-upload" />
-            <label htmlFor="thumbnail-upload" className="cursor-pointer rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
-              {thumbnailPreview ? "Change image" : "Upload image"}
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" id="thumbnail-upload" disabled={uploading} />
+            <label htmlFor="thumbnail-upload" className={`cursor-pointer rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
+              {uploading ? "Uploading..." : thumbnailPreview ? "Change image" : "Upload image"}
             </label>
             <span className="text-xs text-gray-500">or paste a URL below</span>
           </div>
+          {uploadError && <p className="text-xs text-red-400">{uploadError}</p>}
           <input
             type="text"
-            value={form.thumbnail_url.startsWith("data:") ? "" : form.thumbnail_url}
+            value={form.thumbnail_url}
             onChange={(e) => { setForm({ ...form, thumbnail_url: e.target.value }); setThumbnailPreview(e.target.value); }}
-            placeholder="https://example.com/image.jpg"
+            placeholder="https://res.cloudinary.com/..."
             className={inputClass}
           />
         </div>
@@ -306,10 +316,10 @@ export default function ProjectForm({
           )}
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" />
-              <label htmlFor="gallery-upload" className="cursor-pointer inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors">
+              <input ref={galleryInputRef} type="file" accept="image/*,video/*" multiple onChange={handleGalleryUpload} className="hidden" id="gallery-upload" disabled={uploading} />
+              <label htmlFor="gallery-upload" className={`cursor-pointer inline-flex items-center gap-2 rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-500 hover:text-white transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}>
                 <span>+</span>
-                <span>Upload images / videos</span>
+                <span>{uploading ? "Uploading..." : "Upload images / videos"}</span>
               </label>
               <span className="text-xs text-gray-500">or paste a URL:</span>
             </div>

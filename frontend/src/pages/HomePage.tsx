@@ -87,6 +87,16 @@ function ViberIcon() {
   );
 }
 
+function SkeletonGrid() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="skeleton-card" style={{ aspectRatio: "3/2" }} />
+      ))}
+    </div>
+  );
+}
+
 function ProjectGrid({ filtered, showGithub = false }: { filtered: Project[]; showGithub?: boolean }) {
   const [imagesReady, setImagesReady] = useState(false);
   const totalRef = useRef(0);
@@ -353,7 +363,7 @@ export default function HomePage() {
       <main key={activeSection} style={{ animation: "fadeIn 0.25s ease both" }}>
         {activeSection === "Design" && (
           loading ? (
-            <p className="p-8 text-sm" style={{ color: "#888" }}>Loading...</p>
+            <SkeletonGrid />
           ) : (() => {
             const filtered = projects.filter((p) => p.category.toLowerCase() !== "ict");
             return filtered.length === 0
@@ -364,7 +374,7 @@ export default function HomePage() {
 
         {activeSection === "ICT" && (
           loading ? (
-            <p className="p-8 text-sm" style={{ color: "#888" }}>Loading...</p>
+            <SkeletonGrid />
           ) : (() => {
             const filtered = projects.filter((p) => p.category.toLowerCase() === "ict");
             return filtered.length === 0

@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 function isVideo(src: string): boolean {
-  if (src.startsWith("data:video/")) return true;
   const ext = src.split("?")[0].split(".").pop()?.toLowerCase();
   return ["mp4", "mov", "webm", "avi", "mkv"].includes(ext ?? "");
 }
 import { useParams } from "react-router-dom";
-import { fetchAPI } from "../lib/api";
+import { fetchAPI, cloudinaryOpt } from "../lib/api";
 
 interface Project {
   id: string;
@@ -387,7 +386,7 @@ export default function ProjectPage() {
                       </>
                     ) : (
                       <img
-                        src={src}
+                        src={cloudinaryOpt(src, 1200) ?? src}
                         alt={`${project.title} — image ${i + 1}`}
                         className="w-full h-auto block"
                         style={{ display: "block" }}
