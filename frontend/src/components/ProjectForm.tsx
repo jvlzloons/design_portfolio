@@ -281,6 +281,17 @@ export default function ProjectForm({
                   <div className="flex-1 space-y-1.5">
                     <input
                       type="text"
+                      value={src}
+                      onChange={(e) => {
+                        const newImages = [...form.images];
+                        newImages[i] = e.target.value;
+                        setForm((prev) => ({ ...prev, images: newImages }));
+                      }}
+                      placeholder="https://res.cloudinary.com/..."
+                      className={inputClass}
+                    />
+                    <input
+                      type="text"
                       value={form.image_captions[i]?.title ?? ""}
                       onChange={(e) => updateCaption(i, "title", e.target.value)}
                       placeholder="Caption title (optional)"
