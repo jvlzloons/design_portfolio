@@ -99,6 +99,14 @@ export default function HomePage() {
   const [imagesReady, setImagesReady] = useState(false);
   const loadedRef = useRef(0);
   const totalRef = useRef(0);
+  const countedRef = useRef(new Set<number>());
+
+  function countImage(i: number) {
+    if (countedRef.current.has(i)) return;
+    countedRef.current.add(i);
+    loadedRef.current += 1;
+    if (loadedRef.current >= totalRef.current) setImagesReady(true);
+  }
 
   useEffect(() => {
     if (loading) return;
@@ -112,8 +120,12 @@ export default function HomePage() {
     const total = filtered.filter((p) => p.thumbnail_url).length;
     totalRef.current = total;
     loadedRef.current = 0;
+    countedRef.current = new Set();
     setImagesReady(false);
-    if (total === 0) setImagesReady(true);
+    if (total === 0) { setImagesReady(true); return; }
+    // Fallback: show after 4s regardless (handles network failures / edge cases)
+    const timer = setTimeout(() => setImagesReady(true), 4000);
+    return () => clearTimeout(timer);
   }, [activeSection, projects, loading]);
 
   function dismissBanner() {
@@ -317,8 +329,9 @@ export default function HomePage() {
                       src={project.thumbnail_url}
                       alt={project.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onLoad={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
-                      onError={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
+                      ref={(el) => { if (el?.complete) countImage(i); }}
+                      onLoad={() => countImage(i)}
+                      onError={() => countImage(i)}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
@@ -362,8 +375,9 @@ export default function HomePage() {
                       src={project.thumbnail_url}
                       alt={project.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onLoad={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
-                      onError={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
+                      ref={(el) => { if (el?.complete) countImage(i); }}
+                      onLoad={() => countImage(i)}
+                      onError={() => countImage(i)}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
