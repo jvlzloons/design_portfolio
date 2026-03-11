@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const BANNER_KEY = "projects_uploading_dismissed";
 import { fetchAPI } from "../lib/api";
@@ -96,6 +96,25 @@ export default function HomePage() {
     return localStorage.getItem(BANNER_KEY) !== "1";
   });
   const [bannerDismissing, setBannerDismissing] = useState(false);
+  const [imagesReady, setImagesReady] = useState(false);
+  const loadedRef = useRef(0);
+  const totalRef = useRef(0);
+
+  useEffect(() => {
+    if (loading) return;
+    if (activeSection === "Contact") {
+      setImagesReady(true);
+      return;
+    }
+    const filtered = activeSection === "ICT"
+      ? projects.filter((p) => p.category.toLowerCase() === "ict")
+      : projects.filter((p) => p.category.toLowerCase() !== "ict");
+    const total = filtered.filter((p) => p.thumbnail_url).length;
+    totalRef.current = total;
+    loadedRef.current = 0;
+    setImagesReady(false);
+    if (total === 0) setImagesReady(true);
+  }, [activeSection, projects, loading]);
 
   function dismissBanner() {
     setBannerDismissing(true);
@@ -289,13 +308,17 @@ export default function HomePage() {
                   key={project.id}
                   href={`/projects/${project.slug}`}
                   className="relative block overflow-hidden group"
-                  style={{ aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }}
+                  style={imagesReady
+                    ? { aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }
+                    : { aspectRatio: "3/2", opacity: 0 }}
                 >
                   {project.thumbnail_url ? (
                     <img
                       src={project.thumbnail_url}
                       alt={project.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onLoad={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
+                      onError={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
@@ -330,13 +353,17 @@ export default function HomePage() {
                   key={project.id}
                   href={`/projects/${project.slug}`}
                   className="relative block overflow-hidden group"
-                  style={{ aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }}
+                  style={imagesReady
+                    ? { aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }
+                    : { aspectRatio: "3/2", opacity: 0 }}
                 >
                   {project.thumbnail_url ? (
                     <img
                       src={project.thumbnail_url}
                       alt={project.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      onLoad={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
+                      onError={() => { loadedRef.current += 1; if (loadedRef.current >= totalRef.current) setImagesReady(true); }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
