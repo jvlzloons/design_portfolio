@@ -87,6 +87,81 @@ function ViberIcon() {
   );
 }
 
+function ProjectGrid({ filtered, showGithub = false }: { filtered: Project[]; showGithub?: boolean }) {
+  const [imagesReady, setImagesReady] = useState(false);
+  const totalRef = useRef(0);
+  const stateRef = useRef({ loaded: 0, counted: new Set<number>() });
+
+  // Set synchronously during render so ref callbacks see the correct total immediately
+  totalRef.current = filtered.filter((p) => p.thumbnail_url).length;
+
+  function countImage(i: number) {
+    if (stateRef.current.counted.has(i)) return;
+    stateRef.current.counted.add(i);
+    stateRef.current.loaded += 1;
+    if (stateRef.current.loaded >= totalRef.current) setImagesReady(true);
+  }
+
+  useEffect(() => {
+    if (totalRef.current === 0) { setImagesReady(true); return; }
+    const timer = setTimeout(() => setImagesReady(true), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
+      {filtered.map((project, i) => (
+        <a
+          key={project.id}
+          href={`/projects/${project.slug}`}
+          className="relative block overflow-hidden group"
+          style={imagesReady
+            ? { aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }
+            : { aspectRatio: "3/2", opacity: 0 }}
+        >
+          {project.thumbnail_url ? (
+            <img
+              src={project.thumbnail_url}
+              alt={project.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              ref={(el) => { if (el?.complete) countImage(i); }}
+              onLoad={() => countImage(i)}
+              onError={() => countImage(i)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
+              <span className="text-sm" style={{ color: "#888" }}>No image</span>
+            </div>
+          )}
+          <div
+            className="absolute inset-0 flex items-end justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }}
+          >
+            <div>
+              <p className="text-white font-semibold text-sm leading-tight">{project.title}</p>
+              <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{project.category}</p>
+            </div>
+            {showGithub && project.github_url && (
+              <a
+                href={project.github_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
+                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}
+                aria-label="View on GitHub"
+              >
+                <GitHubIcon />
+                <span>GitHub</span>
+              </a>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,37 +171,6 @@ export default function HomePage() {
     return localStorage.getItem(BANNER_KEY) !== "1";
   });
   const [bannerDismissing, setBannerDismissing] = useState(false);
-  const [imagesReady, setImagesReady] = useState(false);
-  const loadedRef = useRef(0);
-  const totalRef = useRef(0);
-  const countedRef = useRef(new Set<number>());
-
-  function countImage(i: number) {
-    if (countedRef.current.has(i)) return;
-    countedRef.current.add(i);
-    loadedRef.current += 1;
-    if (loadedRef.current >= totalRef.current) setImagesReady(true);
-  }
-
-  useEffect(() => {
-    if (loading) return;
-    if (activeSection === "Contact") {
-      setImagesReady(true);
-      return;
-    }
-    const filtered = activeSection === "ICT"
-      ? projects.filter((p) => p.category.toLowerCase() === "ict")
-      : projects.filter((p) => p.category.toLowerCase() !== "ict");
-    const total = filtered.filter((p) => p.thumbnail_url).length;
-    totalRef.current = total;
-    loadedRef.current = 0;
-    countedRef.current = new Set();
-    setImagesReady(false);
-    if (total === 0) { setImagesReady(true); return; }
-    // Fallback: show after 4s regardless (handles network failures / edge cases)
-    const timer = setTimeout(() => setImagesReady(true), 4000);
-    return () => clearTimeout(timer);
-  }, [activeSection, projects, loading]);
 
   function dismissBanner() {
     setBannerDismissing(true);
@@ -307,111 +351,27 @@ export default function HomePage() {
 
       {/* Main content */}
       <main key={activeSection} style={{ animation: "fadeIn 0.25s ease both" }}>
-        {activeSection === "Design" && (() => {
-          const filtered = projects.filter((p) => p.category.toLowerCase() !== "ict");
-          return loading ? (
+        {activeSection === "Design" && (
+          loading ? (
             <p className="p-8 text-sm" style={{ color: "#888" }}>Loading...</p>
-          ) : filtered.length === 0 ? (
-            <p className="p-8 text-sm" style={{ color: "#888" }}>No projects yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
-              {filtered.map((project, i) => (
-                <a
-                  key={project.id}
-                  href={`/projects/${project.slug}`}
-                  className="relative block overflow-hidden group"
-                  style={imagesReady
-                    ? { aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }
-                    : { aspectRatio: "3/2", opacity: 0 }}
-                >
-                  {project.thumbnail_url ? (
-                    <img
-                      src={project.thumbnail_url}
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      ref={(el) => { if (el?.complete) countImage(i); }}
-                      onLoad={() => countImage(i)}
-                      onError={() => countImage(i)}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
-                      <span className="text-sm" style={{ color: "#888" }}>No image</span>
-                    </div>
-                  )}
-                  <div
-                    className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }}
-                  >
-                    <div>
-                      <p className="text-white font-semibold text-sm leading-tight">{project.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{project.category}</p>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          );
-        })()}
+          ) : (() => {
+            const filtered = projects.filter((p) => p.category.toLowerCase() !== "ict");
+            return filtered.length === 0
+              ? <p className="p-8 text-sm" style={{ color: "#888" }}>No projects yet.</p>
+              : <ProjectGrid key="design" filtered={filtered} />;
+          })()
+        )}
 
-        {activeSection === "ICT" && (() => {
-          const filtered = projects.filter((p) => p.category.toLowerCase() === "ict");
-          return loading ? (
+        {activeSection === "ICT" && (
+          loading ? (
             <p className="p-8 text-sm" style={{ color: "#888" }}>Loading...</p>
-          ) : filtered.length === 0 ? (
-            <p className="p-8 text-sm" style={{ color: "#888" }}>No ICT projects yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
-              {filtered.map((project, i) => (
-                <a
-                  key={project.id}
-                  href={`/projects/${project.slug}`}
-                  className="relative block overflow-hidden group"
-                  style={imagesReady
-                    ? { aspectRatio: "3/2", animation: "fadeInUp 0.45s ease both", animationDelay: `${i * 0.07}s` }
-                    : { aspectRatio: "3/2", opacity: 0 }}
-                >
-                  {project.thumbnail_url ? (
-                    <img
-                      src={project.thumbnail_url}
-                      alt={project.title}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      ref={(el) => { if (el?.complete) countImage(i); }}
-                      onLoad={() => countImage(i)}
-                      onError={() => countImage(i)}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
-                      <span className="text-sm" style={{ color: "#888" }}>No image</span>
-                    </div>
-                  )}
-                  <div
-                    className="absolute inset-0 flex items-end justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 65%)" }}
-                  >
-                    <div>
-                      <p className="text-white font-semibold text-sm leading-tight">{project.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{project.category}</p>
-                    </div>
-                    {project.github_url && (
-                      <a
-                        href={project.github_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors"
-                        style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.2)", flexShrink: 0 }}
-                        aria-label="View on GitHub"
-                      >
-                        <GitHubIcon />
-                        <span>GitHub</span>
-                      </a>
-                    )}
-                  </div>
-                </a>
-              ))}
-            </div>
-          );
-        })()}
+          ) : (() => {
+            const filtered = projects.filter((p) => p.category.toLowerCase() === "ict");
+            return filtered.length === 0
+              ? <p className="p-8 text-sm" style={{ color: "#888" }}>No ICT projects yet.</p>
+              : <ProjectGrid key="ict" filtered={filtered} showGithub />;
+          })()
+        )}
 
         {activeSection === "Contact" && (
           <div className="flex flex-col items-center px-6 py-16" style={{ minHeight: "70vh" }}>
