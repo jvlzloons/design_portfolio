@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const BANNER_KEY = "projects_uploading_dismissed";
-import { fetchAPI } from "../lib/api";
+import { getProjectsPromise, cloudinaryOpt } from "../lib/api";
 
 interface Project {
   id: string;
@@ -121,7 +121,7 @@ function ProjectGrid({ filtered, showGithub = false }: { filtered: Project[]; sh
         >
           {project.thumbnail_url ? (
             <img
-              src={project.thumbnail_url}
+              src={cloudinaryOpt(project.thumbnail_url, 600) ?? project.thumbnail_url}
               alt={project.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               ref={(el) => { if (el?.complete) countImage(i); }}
@@ -182,8 +182,8 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    fetchAPI("/projects")
-      .then(setProjects)
+    getProjectsPromise()
+      .then((data) => { if (data) setProjects(data as Project[]); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
