@@ -243,7 +243,13 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [videos, setVideos] = useState<Video[]>([]);
   const [videosLoading, setVideosLoading] = useState(false);
-  const [activeSection, setActiveSection] = useState<Section>("Design");
+  const [activeSection, setActiveSection] = useState<Section>(() => {
+    const hash = window.location.hash.slice(1).toLowerCase();
+    if (hash === "ict") return "ICT";
+    if (hash === "videos") return "Videos";
+    if (hash === "contact") return "Contact";
+    return "Design";
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(() => {
     return localStorage.getItem(BANNER_KEY) !== "1";

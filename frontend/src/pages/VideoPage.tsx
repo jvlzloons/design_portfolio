@@ -16,6 +16,11 @@ function getYouTubeEmbed(url: string) {
   return match ? `https://www.youtube.com/embed/${match[1]}` : url;
 }
 
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
 interface VideoItem {
   id: string;
   title: string;
@@ -282,7 +287,21 @@ export default function VideoPage() {
                     className="w-full overflow-hidden rounded-sm cursor-zoom-in relative"
                     onClick={() => setLightboxIndex(i)}
                   >
-                    {isVideo(src) ? (
+                    {isYouTube(src) ? (
+                      <>
+                        <img
+                          src={`https://img.youtube.com/vi/${getYouTubeId(src)}/maxresdefault.jpg`}
+                          alt={`${video.title} — video ${i + 1}`}
+                          className="w-full h-auto block"
+                          onError={(e) => { (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${getYouTubeId(src)}/hqdefault.jpg`; }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.18)" }}>
+                          <div className="flex items-center justify-center rounded-full" style={{ width: 64, height: 64, background: "rgba(255,255,255,0.92)" }}>
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="#1a1a1a"><polygon points="6,3 21,12 6,21" /></svg>
+                          </div>
+                        </div>
+                      </>
+                    ) : isVideo(src) ? (
                       <>
                         <video
                           src={src}
@@ -337,7 +356,17 @@ export default function VideoPage() {
             )}
 
             <div className="flex flex-col items-center px-16 max-h-screen" style={{ maxWidth: "min(90vw, 1100px)" }} onClick={(e) => e.stopPropagation()}>
-              {isVideo(video.images[lightboxIndex]) ? (
+              {isYouTube(video.images[lightboxIndex]) ? (
+                <div style={{ width: "min(80vw, 900px)", aspectRatio: "16/9" }}>
+                  <iframe
+                    key={lightboxIndex}
+                    src={`https://www.youtube.com/embed/${getYouTubeId(video.images[lightboxIndex])}?autoplay=1`}
+                    className="w-full h-full"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+                </div>
+              ) : isVideo(video.images[lightboxIndex]) ? (
                 <video
                   key={lightboxIndex}
                   src={video.images[lightboxIndex]}

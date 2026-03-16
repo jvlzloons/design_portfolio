@@ -6,6 +6,15 @@ function isVideo(src: string): boolean {
   return ["mp4", "mov", "webm", "avi", "mkv"].includes(ext ?? "");
 }
 
+function isYouTube(url: string): boolean {
+  return url.includes("youtube.com") || url.includes("youtu.be");
+}
+
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
 interface ImageCaption {
   title: string;
   subtitle: string;
@@ -227,7 +236,13 @@ export default function VideoForm({
                     <button type="button" onClick={() => moveGalleryImage(i, "down")} disabled={i === form.images.length - 1} className="text-gray-600 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors text-xs" title="Move down">▼</button>
                   </div>
                   <div className="w-24 h-16 flex-shrink-0 rounded overflow-hidden border border-gray-600 bg-gray-900">
-                    {isVideo(src) ? (
+                    {isYouTube(src) ? (
+                      <img
+                        src={`https://img.youtube.com/vi/${getYouTubeId(src)}/mqdefault.jpg`}
+                        alt={`Gallery ${i + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : isVideo(src) ? (
                       <video src={src} className="w-full h-full object-cover" muted playsInline />
                     ) : (
                       <img src={src} alt={`Gallery ${i + 1}`} className="w-full h-full object-cover" />
@@ -247,7 +262,7 @@ export default function VideoForm({
                     />
                     <input type="text" value={form.image_captions[i]?.title ?? ""} onChange={(e) => updateCaption(i, "title", e.target.value)} placeholder="Caption title (optional)" className={inputClass} />
                     <input type="text" value={form.image_captions[i]?.subtitle ?? ""} onChange={(e) => updateCaption(i, "subtitle", e.target.value)} placeholder="Caption subtitle (optional)" className={inputClass} />
-                    {isVideo(src) && (
+                    {(isVideo(src) || isYouTube(src)) && (
                       <input type="text" value={form.image_captions[i]?.poster ?? ""} onChange={(e) => updateCaption(i, "poster", e.target.value)} placeholder="Video poster/thumbnail URL (optional)" className={inputClass} />
                     )}
                   </div>
