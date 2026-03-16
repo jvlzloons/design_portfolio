@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 
 const BANNER_KEY = "projects_uploading_dismissed";
-import { getProjectsPromise, cloudinaryOpt } from "../lib/api";
+import { getProjectsPromise, cloudinaryOpt, fetchAPI } from "../lib/api";
+
+interface Video {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  client: string | null;
+  year: string | null;
+  tags: string[];
+}
 
 interface Project {
   id: string;
@@ -14,9 +26,9 @@ interface Project {
   is_featured: boolean;
 }
 
-type Section = "Design" | "ICT" | "Contact";
+type Section = "Design" | "ICT" | "Videos" | "Contact";
 
-const NAV_ITEMS: Section[] = ["Design", "ICT", "Contact"];
+const NAV_ITEMS: Section[] = ["Design", "ICT", "Videos", "Contact"];
 
 function XIcon({ size = 18 }: { size?: number }) {
   return (
@@ -84,6 +96,133 @@ function ViberIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path d="M11.4 0C5.5 0 1.1 4.2.8 10c-.3 5.4 3.2 10.2 8.4 11.5l.3.1v2.2c0 .1.1.2.2.2h.1l2.4-2c5.5-.4 9.8-4.8 9.8-10.3C22 5.2 17.3 0 11.4 0zm5.3 15.4c-.3.8-.8 1.4-1.6 1.7-.4.2-.8.3-1.2.3-.5 0-1-.1-1.5-.3-2.4-.9-4.4-2.5-5.8-4.8-.7-1.1-1.2-2.3-1.3-3.6 0-.7.2-1.4.6-1.9.3-.4.7-.7 1.2-.8h.4c.2 0 .4.1.5.4l.8 1.8c.1.2.1.4 0 .6l-.6.8c-.1.1-.1.3 0 .4.8 1.4 2 2.5 3.5 3.2.2.1.4 0 .5-.1l.7-.7c.1-.2.4-.2.6-.1l1.8.9c.3.1.4.3.4.5v.4c0 .4-.1.7-.2 1.3z" />
     </svg>
+  );
+}
+
+function isYouTube(url: string) {
+  return url.includes("youtube.com") || url.includes("youtu.be");
+}
+
+function getYouTubeEmbed(url: string) {
+  const match = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : url;
+}
+
+function VideoGrid({ videos }: { videos: Video[] }) {
+  const [lightbox, setLightbox] = useState<Video | null>(null);
+
+  if (videos.length === 0) {
+    return <p className="p-8 text-sm" style={{ color: "#888" }}>No videos yet.</p>;
+  }
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
+        {videos.map((video) => (
+          <button
+            key={video.id}
+            onClick={() => setLightbox(video)}
+            className="relative block overflow-hidden group text-left w-full"
+            style={{ aspectRatio: "3/2" }}
+          >
+            {video.thumbnail_url ? (
+              <img
+                src={cloudinaryOpt(video.thumbnail_url, 600) ?? video.thumbnail_url}
+                alt={video.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
+                <span className="text-sm" style={{ color: "#888" }}>No thumbnail</span>
+              </div>
+            )}
+            {/* Play button overlay */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
+                style={{ width: 52, height: 52, backgroundColor: "rgba(255,255,255,0.85)" }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1a1a1a" style={{ marginLeft: 3 }}>
+                  <polygon points="5,3 19,12 5,21" />
+                </svg>
+              </div>
+            </div>
+            {/* Title overlay on hover */}
+            <div
+              className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }}
+            >
+              <div>
+                <p className="text-white font-semibold text-sm leading-tight">{video.title}</p>
+                {video.client && (
+                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{video.client}</p>
+                )}
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: "rgba(0,0,0,0.9)" }}
+          onClick={() => setLightbox(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
+              aria-label="Close"
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            {/* Video player */}
+            <div style={{ aspectRatio: "16/9", backgroundColor: "#000" }}>
+              {lightbox.video_url ? (
+                isYouTube(lightbox.video_url) ? (
+                  <iframe
+                    src={getYouTubeEmbed(lightbox.video_url)}
+                    className="w-full h-full"
+                    allow="autoplay; fullscreen"
+                    allowFullScreen
+                  />
+                ) : (
+                  <video
+                    src={lightbox.video_url}
+                    controls
+                    autoPlay
+                    className="w-full h-full"
+                    poster={lightbox.thumbnail_url ?? undefined}
+                  />
+                )
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-500">No video URL</div>
+              )}
+            </div>
+
+            {/* Caption */}
+            {(lightbox.title || lightbox.description) && (
+              <div className="mt-3 text-white">
+                <p className="font-semibold">{lightbox.title}</p>
+                {lightbox.description && (
+                  <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>{lightbox.description}</p>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -175,6 +314,8 @@ function ProjectGrid({ filtered, showGithub = false }: { filtered: Project[]; sh
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [videosLoading, setVideosLoading] = useState(false);
   const [activeSection, setActiveSection] = useState<Section>("Design");
   const [menuOpen, setMenuOpen] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(() => {
@@ -197,6 +338,15 @@ export default function HomePage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (activeSection !== "Videos" || videos.length > 0) return;
+    setVideosLoading(true);
+    fetchAPI("/videos")
+      .then((data) => { if (data) setVideos(data as Video[]); })
+      .catch(console.error)
+      .finally(() => setVideosLoading(false));
+  }, [activeSection]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FBF7F5", fontFamily: "'Space Grotesk', sans-serif"}}>
@@ -381,6 +531,14 @@ export default function HomePage() {
               ? <p className="p-8 text-sm" style={{ color: "#888" }}>No ICT projects yet.</p>
               : <ProjectGrid key="ict" filtered={filtered} showGithub />;
           })()
+        )}
+
+        {activeSection === "Videos" && (
+          videosLoading ? (
+            <SkeletonGrid />
+          ) : (
+            <VideoGrid key="videos" videos={videos} />
+          )
         )}
 
         {activeSection === "Contact" && (

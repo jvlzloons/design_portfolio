@@ -2,6 +2,7 @@ import { useAuth, useUser, UserButton } from "@clerk/clerk-react";
 import { useCallback, useEffect, useState } from "react";
 import { fetchAPI, fetchAuthAPI } from "../lib/api";
 import ProjectForm from "../components/ProjectForm";
+import VideoForm from "../components/VideoForm";
 
 interface Project {
   id: string;
@@ -22,6 +23,20 @@ interface Project {
   client_website: string | null;
   client_x: string | null;
   is_featured: boolean;
+  is_published: boolean;
+  sort_order: number;
+}
+
+interface Video {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  video_url: string | null;
+  thumbnail_url: string | null;
+  tags: string[];
+  client: string | null;
+  year: string | null;
   is_published: boolean;
   sort_order: number;
 }
@@ -48,16 +63,26 @@ export default function AdminPage() {
   const [savingOrder, setSavingOrder] = useState(false);
   const [orderError, setOrderError] = useState("");
 
+  // Videos state
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [showCreateVideo, setShowCreateVideo] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [videoOrderDirty, setVideoOrderDirty] = useState(false);
+  const [savingVideoOrder, setSavingVideoOrder] = useState(false);
+  const [videoOrderError, setVideoOrderError] = useState("");
+
   const loadData = useCallback(async () => {
     try {
       const token = await getToken();
       if (!token) return;
-      const [projectsData, categoriesData] = await Promise.all([
+      const [projectsData, categoriesData, videosData] = await Promise.all([
         fetchAuthAPI("/admin/projects", token),
         fetchAPI("/categories"),
+        fetchAuthAPI("/admin/videos", token),
       ]);
       setProjects(projectsData);
       setCategories(categoriesData);
+      setVideos(videosData ?? []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -174,6 +199,60 @@ export default function AdminPage() {
     if (!token) return;
     await fetchAuthAPI(`/admin/categories/${id}`, token, { method: "DELETE" });
     await loadData();
+  }
+
+  async function handleCreateVideo(data: Record<string, unknown>) {
+    const token = await getToken();
+    if (!token) return;
+    await fetchAuthAPI("/admin/videos", token, { method: "POST", body: JSON.stringify(data) });
+    setShowCreateVideo(false);
+    await loadData();
+  }
+
+  async function handleUpdateVideo(data: Record<string, unknown>) {
+    if (!editingVideo) return;
+    const token = await getToken();
+    if (!token) return;
+    await fetchAuthAPI(`/admin/videos/${editingVideo.id}`, token, { method: "PUT", body: JSON.stringify(data) });
+    setEditingVideo(null);
+    await loadData();
+  }
+
+  async function handleDeleteVideo(id: string) {
+    if (!confirm("Delete this video?")) return;
+    const token = await getToken();
+    if (!token) return;
+    await fetchAuthAPI(`/admin/videos/${id}`, token, { method: "DELETE" });
+    await loadData();
+  }
+
+  function handleMoveVideo(id: string, direction: "up" | "down") {
+    const idx = videos.findIndex((v) => v.id === id);
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= videos.length) return;
+    const newVideos = [...videos];
+    [newVideos[idx], newVideos[swapIdx]] = [newVideos[swapIdx], newVideos[idx]];
+    newVideos.forEach((v, i) => { newVideos[i] = { ...v, sort_order: i }; });
+    setVideos(newVideos);
+    setVideoOrderDirty(true);
+  }
+
+  async function handleSaveVideoOrder() {
+    setSavingVideoOrder(true);
+    setVideoOrderError("");
+    try {
+      const token = await getToken();
+      if (!token) return;
+      await fetchAuthAPI("/admin/videos/reorder", token, {
+        method: "POST",
+        body: JSON.stringify({ items: videos.map((v) => ({ id: v.id, sort_order: v.sort_order })) }),
+      });
+      setVideoOrderDirty(false);
+    } catch (err) {
+      setVideoOrderError(err instanceof Error ? err.message : "Failed to save order.");
+    } finally {
+      setSavingVideoOrder(false);
+    }
   }
 
   const activeForm = showCreateForm || editingProject !== null;
@@ -394,6 +473,124 @@ export default function AdminPage() {
             </div>
           );
         })()}
+        {/* Videos section */}
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-semibold">
+              Videos <span className="text-gray-500 text-base font-normal">({videos.length})</span>
+            </h2>
+            {(videoOrderDirty || videoOrderError) && (
+              <div className="flex items-center gap-3">
+                {videoOrderError && <span className="text-xs text-red-400">{videoOrderError}</span>}
+                {videoOrderDirty && (
+                  <button
+                    onClick={handleSaveVideoOrder}
+                    disabled={savingVideoOrder}
+                    className="rounded-lg bg-green-600 px-4 py-1.5 text-sm font-medium hover:bg-green-500 disabled:opacity-50 transition-colors"
+                  >
+                    {savingVideoOrder ? "Saving..." : "Save Order"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Create video form */}
+          {showCreateVideo && (
+            <div className="mb-6 rounded-lg border border-gray-800 p-6">
+              <h3 className="text-lg font-semibold mb-4">New Video</h3>
+              <VideoForm
+                onSubmit={handleCreateVideo}
+                onCancel={() => setShowCreateVideo(false)}
+                mode="create"
+              />
+            </div>
+          )}
+
+          {/* Edit video form */}
+          {editingVideo && (
+            <div className="mb-6 rounded-lg border border-blue-800 p-6">
+              <h3 className="text-lg font-semibold mb-4">Edit: {editingVideo.title}</h3>
+              <VideoForm
+                onSubmit={handleUpdateVideo}
+                onCancel={() => setEditingVideo(null)}
+                mode="edit"
+                initialValues={{
+                  title: editingVideo.title,
+                  slug: editingVideo.slug,
+                  description: editingVideo.description ?? "",
+                  video_url: editingVideo.video_url ?? "",
+                  thumbnail_url: editingVideo.thumbnail_url ?? "",
+                  tags: (editingVideo.tags ?? []).join(", "),
+                  client: editingVideo.client ?? "",
+                  year: editingVideo.year ?? "",
+                  is_published: editingVideo.is_published,
+                  sort_order: editingVideo.sort_order,
+                }}
+              />
+            </div>
+          )}
+
+          {/* Add video button */}
+          {!showCreateVideo && !editingVideo && (
+            <button
+              onClick={() => setShowCreateVideo(true)}
+              className="mb-6 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium hover:bg-blue-500 transition-colors"
+            >
+              + New Video
+            </button>
+          )}
+
+          {/* Video list */}
+          {videos.length === 0 ? (
+            <p className="text-sm text-gray-500 rounded-lg border border-gray-800 p-4">No videos yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {videos.map((video, index) => (
+                <div key={video.id} className="flex items-center gap-4 rounded-lg border border-gray-800 p-4">
+                  <div className="w-16 h-12 rounded overflow-hidden flex-shrink-0 bg-gray-800">
+                    {video.thumbnail_url ? (
+                      <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">No img</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium truncate">{video.title}</h3>
+                    {video.client && <p className="text-sm text-gray-400">{video.client}</p>}
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex flex-col gap-0.5">
+                      <button
+                        onClick={() => handleMoveVideo(video.id, "up")}
+                        disabled={index === 0}
+                        className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
+                        title="Move up"
+                      >▲</button>
+                      <button
+                        onClick={() => handleMoveVideo(video.id, "down")}
+                        disabled={index === videos.length - 1}
+                        className="text-gray-500 hover:text-gray-200 disabled:opacity-20 disabled:cursor-not-allowed leading-none transition-colors"
+                        title="Move down"
+                      >▼</button>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded ${video.is_published ? "bg-green-900 text-green-300" : "bg-yellow-900 text-yellow-300"}`}>
+                      {video.is_published ? "Published" : "Draft"}
+                    </span>
+                    <button
+                      onClick={() => { setShowCreateVideo(false); setEditingVideo(video); }}
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                    >Edit</button>
+                    <button
+                      onClick={() => handleDeleteVideo(video.id)}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

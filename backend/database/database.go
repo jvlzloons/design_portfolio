@@ -116,5 +116,26 @@ func migrate() {
 		log.Fatal("Failed to add image_captions column:", err)
 	}
 
+	_, err = DB.Exec(`
+		CREATE TABLE IF NOT EXISTS videos (
+			id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			title         TEXT NOT NULL,
+			slug          TEXT NOT NULL UNIQUE,
+			description   TEXT,
+			video_url     TEXT,
+			thumbnail_url TEXT,
+			tags          TEXT[] NOT NULL DEFAULT '{}',
+			client        TEXT,
+			year          TEXT,
+			is_published  BOOLEAN NOT NULL DEFAULT FALSE,
+			sort_order    INT NOT NULL DEFAULT 0
+		)
+	`)
+	if err != nil {
+		log.Fatal("Failed to create videos table:", err)
+	}
+
 	fmt.Println("Database migration complete")
 }

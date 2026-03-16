@@ -51,6 +51,7 @@ func main() {
 	r.Get("/api/categories", handlers.GetCategories)
 	r.Get("/api/projects", handlers.GetProjects)
 	r.Get("/api/projects/{slug}", handlers.GetProjectBySlug)
+	r.Get("/api/videos", handlers.GetVideos)
 
 	// Admin routes (protected by Clerk auth)
 	r.Route("/api/admin", func(r chi.Router) {
@@ -62,6 +63,11 @@ func main() {
 		r.Delete("/projects/{id}", handlers.DeleteProject)
 		r.Post("/categories", handlers.CreateCategory)
 		r.Delete("/categories/{id}", handlers.DeleteCategory)
+		r.Get("/videos", handlers.AdminGetVideos)
+		r.Post("/videos", handlers.CreateVideo)
+		r.Post("/videos/reorder", handlers.ReorderVideos)
+		r.Put("/videos/{id}", handlers.UpdateVideo)
+		r.Delete("/videos/{id}", handlers.DeleteVideo)
 	})
 
 	port := os.Getenv("PORT")
