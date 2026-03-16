@@ -124,6 +124,8 @@ export default function ProjectPage() {
           <span style={{ color: "#c4bfb6", padding: "0 2px" }}>|</span>
           <a href="/#ict" className="px-2 py-0.5 hover:text-black transition-colors" style={{ borderBottom: "1.5px solid transparent" }}>ICT</a>
           <span style={{ color: "#c4bfb6", padding: "0 2px" }}>|</span>
+          <a href="/#videos" className="px-2 py-0.5 hover:text-black transition-colors" style={{ borderBottom: "1.5px solid transparent" }}>Videos</a>
+          <span style={{ color: "#c4bfb6", padding: "0 2px" }}>|</span>
           <a href="/#contact" className="px-2 py-0.5 hover:text-black transition-colors" style={{ borderBottom: "1.5px solid transparent" }}>Contact</a>
         </nav>
 
@@ -201,7 +203,7 @@ export default function ProjectPage() {
 
         {/* Nav items */}
         <nav className="flex flex-col px-6 pt-8 gap-1 text-sm font-medium">
-          {[{ label: "Design", href: "/" }, { label: "ICT", href: "/#ict" }, { label: "Contact", href: "/#contact" }].map(({ label, href }) => (
+          {[{ label: "Design", href: "/" }, { label: "ICT", href: "/#ict" }, { label: "Videos", href: "/#videos" }, { label: "Contact", href: "/#contact" }].map(({ label, href }) => (
             <a
               key={label}
               href={href}

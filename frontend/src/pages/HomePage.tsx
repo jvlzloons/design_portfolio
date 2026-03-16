@@ -99,130 +99,57 @@ function ViberIcon() {
   );
 }
 
-function isYouTube(url: string) {
-  return url.includes("youtube.com") || url.includes("youtu.be");
-}
-
-function getYouTubeEmbed(url: string) {
-  const match = url.match(/(?:v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
-  return match ? `https://www.youtube.com/embed/${match[1]}?autoplay=1` : url;
-}
-
 function VideoGrid({ videos }: { videos: Video[] }) {
-  const [lightbox, setLightbox] = useState<Video | null>(null);
-
   if (videos.length === 0) {
     return <p className="p-8 text-sm" style={{ color: "#888" }}>No videos yet.</p>;
   }
 
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
-        {videos.map((video) => (
-          <button
-            key={video.id}
-            onClick={() => setLightbox(video)}
-            className="relative block overflow-hidden group text-left w-full"
-            style={{ aspectRatio: "3/2" }}
-          >
-            {video.thumbnail_url ? (
-              <img
-                src={cloudinaryOpt(video.thumbnail_url, 600) ?? video.thumbnail_url}
-                alt={video.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
-                <span className="text-sm" style={{ color: "#888" }}>No thumbnail</span>
-              </div>
-            )}
-            {/* Play button overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div
-                className="rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
-                style={{ width: 52, height: 52, backgroundColor: "rgba(255,255,255,0.85)" }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1a1a1a" style={{ marginLeft: 3 }}>
-                  <polygon points="5,3 19,12 5,21" />
-                </svg>
-              </div>
-            </div>
-            {/* Title overlay on hover */}
-            <div
-              className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }}
-            >
-              <div>
-                <p className="text-white font-semibold text-sm leading-tight">{video.title}</p>
-                {video.client && (
-                  <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{video.client}</p>
-                )}
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Lightbox */}
-      {lightbox && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: "rgba(0,0,0,0.9)" }}
-          onClick={() => setLightbox(null)}
+    <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: "2px" }}>
+      {videos.map((video) => (
+        <a
+          key={video.id}
+          href={`/videos/${video.slug}`}
+          className="relative block overflow-hidden group"
+          style={{ aspectRatio: "3/2" }}
         >
-          <div
-            className="relative w-full max-w-4xl mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setLightbox(null)}
-              className="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors"
-              aria-label="Close"
+          {video.thumbnail_url ? (
+            <img
+              src={cloudinaryOpt(video.thumbnail_url, 600) ?? video.thumbnail_url}
+              alt={video.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: "#d4cfc6" }}>
+              <span className="text-sm" style={{ color: "#888" }}>No thumbnail</span>
+            </div>
+          )}
+          {/* Play button overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className="rounded-full flex items-center justify-center transition-transform duration-200 group-hover:scale-110"
+              style={{ width: 52, height: 52, backgroundColor: "rgba(255,255,255,0.85)" }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#1a1a1a" style={{ marginLeft: 3 }}>
+                <polygon points="5,3 19,12 5,21" />
               </svg>
-            </button>
-
-            {/* Video player */}
-            <div style={{ aspectRatio: "16/9", backgroundColor: "#000" }}>
-              {lightbox.video_url ? (
-                isYouTube(lightbox.video_url) ? (
-                  <iframe
-                    src={getYouTubeEmbed(lightbox.video_url)}
-                    className="w-full h-full"
-                    allow="autoplay; fullscreen"
-                    allowFullScreen
-                  />
-                ) : (
-                  <video
-                    src={lightbox.video_url}
-                    controls
-                    autoPlay
-                    className="w-full h-full"
-                    poster={lightbox.thumbnail_url ?? undefined}
-                  />
-                )
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-500">No video URL</div>
+            </div>
+          </div>
+          {/* Title overlay on hover */}
+          <div
+            className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 60%)" }}
+          >
+            <div>
+              <p className="text-white font-semibold text-sm leading-tight">{video.title}</p>
+              {video.client && (
+                <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.7)" }}>{video.client}</p>
               )}
             </div>
-
-            {/* Caption */}
-            {(lightbox.title || lightbox.description) && (
-              <div className="mt-3 text-white">
-                <p className="font-semibold">{lightbox.title}</p>
-                {lightbox.description && (
-                  <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.65)" }}>{lightbox.description}</p>
-                )}
-              </div>
-            )}
           </div>
-        </div>
-      )}
-    </>
+        </a>
+      ))}
+    </div>
   );
 }
 

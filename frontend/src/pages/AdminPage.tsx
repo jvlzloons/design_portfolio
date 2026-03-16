@@ -32,8 +32,11 @@ interface Video {
   title: string;
   slug: string;
   description: string | null;
+  long_description: string | null;
   video_url: string | null;
   thumbnail_url: string | null;
+  images: string[];
+  image_captions: { title: string; subtitle: string; poster: string }[];
   tags: string[];
   client: string | null;
   year: string | null;
@@ -519,8 +522,11 @@ export default function AdminPage() {
                   title: editingVideo.title,
                   slug: editingVideo.slug,
                   description: editingVideo.description ?? "",
+                  long_description: editingVideo.long_description ?? "",
                   video_url: editingVideo.video_url ?? "",
                   thumbnail_url: editingVideo.thumbnail_url ?? "",
+                  images: editingVideo.images ?? [],
+                  image_captions: editingVideo.image_captions ?? [],
                   tags: (editingVideo.tags ?? []).join(", "),
                   client: editingVideo.client ?? "",
                   year: editingVideo.year ?? "",

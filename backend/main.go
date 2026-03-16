@@ -52,6 +52,7 @@ func main() {
 	r.Get("/api/projects", handlers.GetProjects)
 	r.Get("/api/projects/{slug}", handlers.GetProjectBySlug)
 	r.Get("/api/videos", handlers.GetVideos)
+	r.Get("/api/videos/{slug}", handlers.GetVideoBySlug)
 
 	// Admin routes (protected by Clerk auth)
 	r.Route("/api/admin", func(r chi.Router) {

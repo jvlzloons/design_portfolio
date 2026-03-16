@@ -124,8 +124,11 @@ func migrate() {
 			title         TEXT NOT NULL,
 			slug          TEXT NOT NULL UNIQUE,
 			description   TEXT,
+			long_description TEXT,
 			video_url     TEXT,
 			thumbnail_url TEXT,
+			images        TEXT[] NOT NULL DEFAULT '{}',
+			image_captions JSONB NOT NULL DEFAULT '[]',
 			tags          TEXT[] NOT NULL DEFAULT '{}',
 			client        TEXT,
 			year          TEXT,
@@ -135,6 +138,21 @@ func migrate() {
 	`)
 	if err != nil {
 		log.Fatal("Failed to create videos table:", err)
+	}
+
+	_, err = DB.Exec(`ALTER TABLE videos ADD COLUMN IF NOT EXISTS images TEXT[] NOT NULL DEFAULT '{}'`)
+	if err != nil {
+		log.Fatal("Failed to add images column to videos:", err)
+	}
+
+	_, err = DB.Exec(`ALTER TABLE videos ADD COLUMN IF NOT EXISTS image_captions JSONB NOT NULL DEFAULT '[]'`)
+	if err != nil {
+		log.Fatal("Failed to add image_captions column to videos:", err)
+	}
+
+	_, err = DB.Exec(`ALTER TABLE videos ADD COLUMN IF NOT EXISTS long_description TEXT`)
+	if err != nil {
+		log.Fatal("Failed to add long_description column to videos:", err)
 	}
 
 	fmt.Println("Database migration complete")
