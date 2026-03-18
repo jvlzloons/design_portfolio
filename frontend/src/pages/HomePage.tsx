@@ -543,6 +543,21 @@ export default function HomePage() {
                   <p className="text-sm font-medium group-hover:underline" style={{ color: "#1a1a1a" }}>github.com/jvlzloons</p>
                 </div>
               </a>
+
+              {/* LinkedIn */}
+              <a
+                href="https://www.linkedin.com/in/jvlz/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 py-4 group"
+                style={{ borderBottom: "1px solid #e4dfd6", color: "#1a1a1a", textDecoration: "none" }}
+              >
+                <span style={{ color: "#a09a90" }} className="group-hover:text-black transition-colors flex-shrink-0"><LinkedInIcon /></span>
+                <div>
+                  <p className="text-xs uppercase tracking-wider mb-0.5" style={{ color: "#a09a90", letterSpacing: "0.12em" }}>LinkedIn</p>
+                  <p className="text-sm font-medium group-hover:underline" style={{ color: "#1a1a1a" }}>linkedin.com/in/jvlz</p>
+                </div>
+              </a>
             </div>
 
             {/* Social icons */}
